@@ -205,6 +205,14 @@ export default function Page() {
             else setParts(prev => [...prev, { ...data, id: 'S' + Math.random().toString(36).substr(2, 5), totalPrice: data.qty * data.unitPrice }]);
         }
 
+        // Auto-Reset Filters on Save so user sees the new item
+        setFilterYear('All');
+        setFilterMonth('All');
+        setFilterPhase('All');
+        setFilterBranchId('All');
+        setFilterCategory('All');
+        setGlobalSearch('');
+
         setIsModalOpen(false);
     };
 
