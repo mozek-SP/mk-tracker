@@ -236,7 +236,23 @@ export default function Page() {
                     const date_info = new Date(utc_value * 1000);
                     return format(date_info, 'yyyy-MM-dd');
                 }
-                // Attempt to parse string/ISO
+                // Handle DD/MM/YYYY string format (e.g. 22/10/2021)
+                if (typeof serial === 'string' && serial.includes('/')) {
+                    const parts = serial.split('/');
+                    if (parts.length === 3) {
+                        try {
+                            // Assume DD/MM/YYYY
+                            const day = parseInt(parts[0], 10);
+                            const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                            const year = parseInt(parts[2], 10);
+                            const dateObj = new Date(year, month, day);
+                            if (!isNaN(dateObj.getTime())) {
+                                return format(dateObj, 'yyyy-MM-dd');
+                            }
+                        } catch (e) { console.error('Date parse error', e); }
+                    }
+                }
+                // Attempt to parse standard string/ISO
                 try { return format(new Date(serial), 'yyyy-MM-dd'); } catch { return format(new Date(), 'yyyy-MM-dd'); }
             };
 
