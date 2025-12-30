@@ -658,14 +658,18 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
                                     <Input autoFocus placeholder="Enter Category Type" className="bg-slate-800/80 border-brand/50 h-11" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} />
                                 ) : (
                                     <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.type} onChange={e => handleSelectChange('type', e.target.value)}>
-                                        <option value="Maintenance">Maintenance</option><option value="Repair">Repair</option><option value="Spare Parts">Spare Parts</option><option value="Service">Service</option><option value="Other">Other</option>
+                                        <option value="ค่าบำรุงรักษา">ค่าบำรุงรักษา</option>
+                                        <option value="ค่าซ่อมแซม">ค่าซ่อมแซม</option>
+                                        <option value="ค่าอะไหล่">ค่าอะไหล่</option>
+                                        <option value="ค่าบริการ">ค่าบริการ</option>
+                                        <option value="ค่าใช้จ่ายอื่น ๆ">ค่าใช้จ่ายอื่น ๆ</option>
                                     </select>
                                 )}
                             </div>
-                            <FormGroup label={t('Detail', 'รายละเอียดเพิ่มเติม')} value={formData.detail} onChange={(v: any) => setFormData({ ...formData, detail: v })} />
+                            <FormGroup label={t('Detail', 'รายละเอียด')} value={formData.detail} onChange={(v: any) => setFormData({ ...formData, detail: v })} />
                             <div className="grid grid-cols-2 gap-4">
-                                <FormGroup label={t('Amount (THB)', 'ยอดเงินรวม')} type="number" value={formData.amount} onChange={(v: any) => setFormData({ ...formData, amount: parseFloat(v) })} />
-                                <FormGroup label={t('Technician', 'ช่างผู้บันทึก')} value={formData.technician} onChange={(v: any) => setFormData({ ...formData, technician: v })} />
+                                <FormGroup label={t('Amount (THB)', 'จำนวนเงิน (บาท)')} type="number" value={formData.amount} onChange={(v: any) => setFormData({ ...formData, amount: parseFloat(v) })} />
+                                <FormGroup label={t('Technician', 'ช่างที่เข้าหน้างาน')} value={formData.technician} onChange={(v: any) => setFormData({ ...formData, technician: v })} />
                             </div>
                         </>
                     )}
@@ -674,18 +678,31 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
                         <>
                             <FormGroup label={t('Service Date', 'วันที่ซ่อม')} type="date" value={formData.date} onChange={(v: any) => setFormData({ ...formData, date: v })} />
                             <div className="grid grid-cols-2 gap-4">
-                                <FormGroup label={t('Device Model', 'รุ่นอุปกรณ์')} value={formData.device} onChange={(v: any) => setFormData({ ...formData, device: v })} />
+                                <div>
+                                    <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Device', 'อุปกรณ์ที่ซ่อม')}</label>
+                                    {otherFields.device ? (
+                                        <Input autoFocus placeholder="Enter Device Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.device} onChange={e => setFormData({ ...formData, device: e.target.value })} />
+                                    ) : (
+                                        <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.device} onChange={e => handleSelectChange('device', e.target.value)}>
+                                            <option value="CI-10B">CI-10B</option>
+                                            <option value="CI-10C">CI-10C</option>
+                                            <option value="CI-5B">CI-5B</option>
+                                            <option value="UPS">UPS</option>
+                                            <option value="Other">อื่น ๆ</option>
+                                        </select>
+                                    )}
+                                </div>
                                 <FormGroup label={t('Part Name', 'ชื่ออะไหล่')} value={formData.partName} onChange={(v: any) => setFormData({ ...formData, partName: v })} />
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <FormGroup label={t('Qty', 'จำนวน')} type="number" value={formData.qty} onChange={(v: any) => setFormData({ ...formData, qty: parseInt(v) })} />
-                                <FormGroup label={t('Price/Unit', 'ราคาต่อหน่วย')} type="number" value={formData.unitPrice} onChange={(v: any) => setFormData({ ...formData, unitPrice: parseFloat(v) })} />
+                                <FormGroup label={t('Price/Unit', 'ราคา/หน่วย')} type="number" value={formData.unitPrice} onChange={(v: any) => setFormData({ ...formData, unitPrice: parseFloat(v) })} />
                                 <div className="flex flex-col justify-center">
-                                    <span className="text-[10px] text-slate-500 uppercase font-black mb-1.5 tracking-tighter">Total</span>
+                                    <span className="text-[10px] text-slate-500 uppercase font-black mb-1.5 tracking-tighter">{t('Total', 'ราคารวม')}</span>
                                     <span className="text-sm font-black text-brand leading-none">฿{(formData.qty * formData.unitPrice).toLocaleString()}</span>
                                 </div>
                             </div>
-                            <FormGroup label={t('Technician', 'ผู้ทำการซ่อม')} value={formData.technician} onChange={(v: any) => setFormData({ ...formData, technician: v })} />
+                            <FormGroup label={t('Technician', 'ช่างที่ดำเนินการ')} value={formData.technician} onChange={(v: any) => setFormData({ ...formData, technician: v })} />
                         </>
                     )}
                 </div>
@@ -842,14 +859,24 @@ const MachineListView = ({ machines, branches, onEdit, onDelete, t }: any) => (
 const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">{t('Date', 'วันที่')}</th><th className="px-6 py-4">{t('Branch', 'สาขา')}</th><th className="px-6 py-4">{t('Type', 'ประเภท')}</th><th className="px-6 py-4 text-right">{t('Amount', 'ยอดเงิน')}</th><th className="px-6 py-4 text-right">Actions</th></tr>
+            <tr>
+                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
+                <th className="px-6 py-4">{t('Type', 'ประเภทค่าใช้จ่าย')}</th>
+                <th className="px-6 py-4">{t('Detail', 'รายละเอียด')}</th>
+                <th className="px-6 py-4">{t('Technician', 'ช่างที่เข้าหน้างาน')}</th>
+                <th className="px-6 py-4 text-right">{t('Amount', 'จำนวนเงิน(บาท)')}</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {expenses.map((e: any) => (
                 <TableRow key={e.id} onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)}>
-                    <td className="px-6 py-4 text-slate-400 font-medium">{e.date}</td>
                     <td className="px-6 py-4 font-bold text-white">{branches.find((b: any) => b.id === e.branchId)?.name}</td>
+                    <td className="px-6 py-4 text-slate-400 font-medium text-xs">{e.date}</td>
                     <td className="px-6 py-4"><Badge className="bg-slate-800 text-brand border-brand/20 font-bold">{e.type}</Badge></td>
+                    <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{e.detail}</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{e.technician}</td>
                     <td className="px-6 py-4 text-right font-black text-brand tabular-nums">฿{e.amount.toLocaleString()}</td>
                 </TableRow>
             ))}
@@ -860,15 +887,29 @@ const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t }: any) => (
 const SparePartsView = ({ parts, branches, onEdit, onDelete, t }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Device</th><th className="px-6 py-4">Part</th><th className="px-6 py-4">Branch</th><th className="px-6 py-4 text-right">Total Cost</th><th className="px-6 py-4 text-right">Actions</th></tr>
+            <tr>
+                <th className="px-6 py-4">{t('Date', 'วันที่ซ่อม')}</th>
+                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                <th className="px-6 py-4">{t('Device', 'อุปกรณ์ที่ซ่อม')}</th>
+                <th className="px-6 py-4">{t('Part', 'ชื่ออะไหล่')}</th>
+                <th className="px-6 py-4 text-center">{t('Qty', 'จำนวน')}</th>
+                <th className="px-6 py-4 text-right">{t('Price/Unit', 'ราคา/หน่วย')}</th>
+                <th className="px-6 py-4 text-right">{t('Total', 'ราคารวม')}</th>
+                <th className="px-6 py-4">{t('Technician', 'ช่างที่ดำเนินการ')}</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {parts.map((p: any) => (
                 <TableRow key={p.id} onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)}>
-                    <td className="px-6 py-4 text-white font-bold">{p.device}</td>
-                    <td className="px-6 py-4 text-slate-400 font-semibold">{p.partName}</td>
-                    <td className="px-6 py-4 text-slate-500">{branches.find((b: any) => b.id === p.branchId)?.name}</td>
+                    <td className="px-6 py-4 text-slate-400 font-medium text-xs">{p.date}</td>
+                    <td className="px-6 py-4 text-white font-bold text-sm">{branches.find((b: any) => b.id === p.branchId)?.name}</td>
+                    <td className="px-6 py-4 text-brand font-bold text-xs">{p.device}</td>
+                    <td className="px-6 py-4 text-slate-300 font-semibold">{p.partName}</td>
+                    <td className="px-6 py-4 text-center text-slate-400">{p.qty}</td>
+                    <td className="px-6 py-4 text-right text-slate-400 tabular-nums">฿{p.unitPrice.toLocaleString()}</td>
                     <td className="px-6 py-4 text-right font-black text-emerald-500 tabular-nums">฿{p.totalPrice.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{p.technician}</td>
                 </TableRow>
             ))}
         </tbody>

@@ -15,9 +15,9 @@ export const mockMachines: Machine[] = [
 ];
 
 export const mockExpenses: Expense[] = [
-    { id: 'E1', branchId: '1', date: '2023-12-01', type: 'Maintenance', detail: 'Monthly checkup', amount: 1500, technician: 'Somchai' },
-    { id: 'E2', branchId: '2', date: '2023-12-15', type: 'Repair', detail: 'POS screen replacement', amount: 4500, technician: 'Wichai' },
-    { id: 'E3', branchId: '4', date: '2023-12-20', type: 'Spare Parts', detail: 'New cable', amount: 500, technician: 'Anan' },
+    { id: 'E1', branchId: '1', date: '2023-12-01', type: 'ค่าบำรุงรักษา', detail: 'Monthly checkup', amount: 1500, technician: 'Somchai' },
+    { id: 'E2', branchId: '2', date: '2023-12-15', type: 'ค่าซ่อมแซม', detail: 'POS screen replacement', amount: 4500, technician: 'Wichai' },
+    { id: 'E3', branchId: '4', date: '2023-12-20', type: 'ค่าอะไหล่', detail: 'New cable', amount: 500, technician: 'Anan' },
 ];
 
 export const mockSpareParts: SparePart[] = [
