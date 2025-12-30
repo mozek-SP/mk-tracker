@@ -43,15 +43,15 @@ export const downloadEntityTemplate = (type: 'branch' | 'machine' | 'expense' | 
 
     switch (type) {
         case 'branch':
-            headers = ['name', 'province', 'phone', 'phase', 'zone'];
+            headers = ['code', 'name', 'type', 'province', 'phone', 'phase', 'zone'];
             fileName = 'MK_Branch_Template';
             break;
         case 'machine':
-            headers = ['name', 'sn', 'branchId', 'pos', 'status', 'installDate'];
+            headers = ['branchId', 'name', 'sn', 'installDate', 'pos', 'status', 'remark'];
             fileName = 'MK_Machine_Template';
             break;
         case 'expense':
-            headers = ['date', 'branchId', 'type', 'amount', 'detail', 'technician'];
+            headers = ['date', 'branchId', 'type', 'detail', 'amount', 'technician'];
             fileName = 'MK_Expense_Template';
             break;
         case 'part':
