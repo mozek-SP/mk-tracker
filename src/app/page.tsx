@@ -176,6 +176,17 @@ export default function Page() {
         if (type === 'part') setParts(prev => prev.filter(i => i.id !== id));
     };
 
+    const handleClearAll = () => {
+        // Double confirm for safety
+        if (!confirm(t('WARNING: This will delete ALL items in this list.\nAre you sure?', 'คำเตือน: การกระทำนี้จะลบข้อมูล "ทั้งหมด" ในหน้านี้\nคุณแน่ใจหรือไม่?'))) return;
+        if (!confirm(t('Final Confirmation: Delete everything?', 'ยืนยันครั้งสุดท้าย: ลบข้อมูลทั้งหมดจริงหรือไม่?'))) return;
+
+        if (activeTab === 'branches') setBranches([]);
+        if (activeTab === 'machines') setMachines([]);
+        if (activeTab === 'expenses') setExpenses([]);
+        if (activeTab === 'parts') setParts([]);
+    };
+
     const saveItem = (data: any) => {
         const type = modalType;
         const isEdit = !!editingItem;
@@ -389,6 +400,9 @@ export default function Page() {
                                     </span>
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
+                                    <button onClick={handleClearAll} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-red-600/10 text-red-500 border border-red-600/20 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-red-500/10 hover:shadow-red-500/30 active:scale-95 mr-2" title={t('Clear All', 'ล้างข้อมูลทั้งหมด')}>
+                                        <Trash2 size={16} className="mb-0.5" /> {t('Clear', 'ล้างทั้งหมด')}
+                                    </button>
                                     <button onClick={handleExport} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-emerald-600/10 text-emerald-500 border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/30 active:scale-95" title={t('Export Excel', 'ส่งออกไฟล์')}>
                                         <Download size={16} className="mb-0.5" /> {t('Export', 'ส่งออก')}
                                     </button>
