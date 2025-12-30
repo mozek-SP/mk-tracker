@@ -574,12 +574,14 @@ const DashboardView = ({ branches, machines, expenses, t }: any) => {
                                     data={[
                                         { name: 'Ready', value: machines.filter((m: any) => m.status === 'Ready' || m.status === 'พร้อมใช้งาน').length },
                                         { name: 'Repair', value: machines.filter((m: any) => m.status === 'Repair' || m.status === 'รอซ่อม').length },
-                                        { name: 'Other', value: machines.filter((m: any) => !['Ready', 'Repair', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length },
+                                        { name: 'Renovate', value: machines.filter((m: any) => m.status === 'Renovate').length },
+                                        { name: 'Other', value: machines.filter((m: any) => !['Ready', 'Repair', 'Renovate', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length },
                                     ]}
                                     innerRadius={70} outerRadius={90} paddingAngle={8} dataKey="value"
                                 >
                                     <Cell fill="#10B981" />
                                     <Cell fill="#F43F5E" />
+                                    <Cell fill="#EAB308" />
                                     <Cell fill="#64748b" />
                                 </Pie>
                                 <Tooltip />
@@ -593,7 +595,8 @@ const DashboardView = ({ branches, machines, expenses, t }: any) => {
                     <div className="mt-10 space-y-4">
                         <PieLegend label="พร้อมใช้งาน (Ready)" value={machines.filter((m: any) => m.status === 'Ready' || m.status === 'พร้อมใช้งาน').length} color="bg-emerald-500" />
                         <PieLegend label="กำลังซ่อม (Repair)" value={machines.filter((m: any) => m.status === 'Repair' || m.status === 'รอซ่อม').length} color="bg-rose-500" />
-                        <PieLegend label="อื่นๆ (Other)" value={machines.filter((m: any) => !['Ready', 'Repair', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length} color="bg-slate-500" />
+                        <PieLegend label="Renovate" value={machines.filter((m: any) => m.status === 'Renovate').length} color="bg-yellow-500" />
+                        <PieLegend label="อื่นๆ (Other)" value={machines.filter((m: any) => !['Ready', 'Repair', 'Renovate', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length} color="bg-slate-500" />
                     </div>
                 </Card>
             </div>
@@ -744,6 +747,7 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
                                         <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.status} onChange={e => handleSelectChange('status', e.target.value)}>
                                             <option value="พร้อมใช้งาน">พร้อมใช้งาน</option>
                                             <option value="รอซ่อม">รอซ่อม</option>
+                                            <option value="Renovate">Renovate</option>
                                             <option value="ยกเลิกการใช้งาน">ยกเลิกการใช้งาน</option>
                                             <option value="Other">อื่น ๆ</option>
                                         </select>
