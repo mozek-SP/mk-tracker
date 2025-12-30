@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     // Check if the user has an auth cookie
     const authCookie = request.cookies.get('auth');
     const isLoginPage = request.nextUrl.pathname === '/login';
