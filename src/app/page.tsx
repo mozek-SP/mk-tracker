@@ -214,12 +214,64 @@ export default function Page() {
         if (!file) return;
         try {
             const data = await importFromExcel(file);
-            if (activeTab === 'branches') setBranches(prev => [...prev, ...data.map(d => ({ ...d, id: Math.random().toString(36).substr(2, 9) }))]);
-            if (activeTab === 'machines') setMachines(prev => [...prev, ...data.map(d => ({ ...d, id: 'M' + Math.random().toString(36).substr(2, 5) }))]);
-            if (activeTab === 'expenses') setExpenses(prev => [...prev, ...data.map(d => ({ ...d, id: 'E' + Math.random().toString(36).substr(2, 5) }))]);
-            if (activeTab === 'parts') setParts(prev => [...prev, ...data.map(d => ({ ...d, id: 'S' + Math.random().toString(36).substr(2, 5), totalPrice: (d.qty || 0) * (d.unitPrice || 0) }))]);
+
+            // Helper to parse Excel dates (which might be Numbers or Strings)
+            const excelDateToJSDate = (serial: any) => {
+                if (!serial) return format(new Date(), 'yyyy-MM-dd'); // Default to today if missing
+                if (typeof serial === 'number') {
+                    // Excel serial date to JS Date
+                    const utc_days = Math.floor(serial - 25569);
+                    const utc_value = utc_days * 86400;
+                    const date_info = new Date(utc_value * 1000);
+                    return format(date_info, 'yyyy-MM-dd');
+                }
+                // Attempt to parse string/ISO
+                try { return format(new Date(serial), 'yyyy-MM-dd'); } catch { return format(new Date(), 'yyyy-MM-dd'); }
+            };
+
+            // Helper to match Branch Name if ID is missing or text
+            const findBranchId = (val: any) => {
+                const found = branches.find(b => b.name === val || b.code === val || b.id === val);
+                return found ? found.id : val; // Return Found ID or original value
+            };
+
+            if (activeTab === 'branches') {
+                setBranches(prev => [...prev, ...data.map(d => ({
+                    ...d,
+                    id: Math.random().toString(36).substr(2, 9),
+                    // Ensure crucial fields exist
+                    phase: d.phase ? String(d.phase) : '1',
+                    zone: d.zone || 'BKK'
+                }))]);
+            }
+            if (activeTab === 'machines') {
+                setMachines(prev => [...prev, ...data.map(d => ({
+                    ...d,
+                    id: 'M' + Math.random().toString(36).substr(2, 5),
+                    branchId: findBranchId(d.branchId),
+                    installDate: excelDateToJSDate(d.installDate)
+                }))]);
+            }
+            if (activeTab === 'expenses') {
+                setExpenses(prev => [...prev, ...data.map(d => ({
+                    ...d,
+                    id: 'E' + Math.random().toString(36).substr(2, 5),
+                    branchId: findBranchId(d.branchId),
+                    date: excelDateToJSDate(d.date)
+                }))]);
+            }
+            if (activeTab === 'parts') {
+                setParts(prev => [...prev, ...data.map(d => ({
+                    ...d,
+                    id: 'S' + Math.random().toString(36).substr(2, 5),
+                    branchId: findBranchId(d.branchId),
+                    date: excelDateToJSDate(d.date),
+                    totalPrice: (d.qty || 0) * (d.unitPrice || 0)
+                }))]);
+            }
             alert(t('Import Successful!', 'นำเข้าข้อมูลสำเร็จ!'));
         } catch (err) {
+            console.error(err);
             alert(t('Import Failed!', 'นำเข้าข้อมูลล้มเหลว!'));
         }
         e.target.value = '';
