@@ -296,6 +296,15 @@ export default function Page() {
                     totalPrice: (d.qty || 0) * (d.unitPrice || 0)
                 }))]);
             }
+
+            // AUTO-RESET FILTERS to ensure data is visible immediately
+            setFilterYear('All');
+            setFilterMonth('All');
+            setFilterPhase('All');
+            setFilterBranchId('All');
+            setFilterCategory('All');
+            setGlobalSearch('');
+
             alert(t('Import Successful!', 'นำเข้าข้อมูลสำเร็จ!'));
         } catch (err) {
             console.error(err);
