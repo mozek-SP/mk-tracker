@@ -95,7 +95,7 @@ export default function Page() {
     // --- Filter State ---
     const [globalSearch, setGlobalSearch] = useState('');
     const [filterMonth, setFilterMonth] = useState<string>('All');
-    const [filterYear, setFilterYear] = useState<string>('2023');
+    const [filterYear, setFilterYear] = useState<string>(format(new Date(), 'yyyy'));
     const [filterPhase, setFilterPhase] = useState<string>('All');
     const [filterBranchId, setFilterBranchId] = useState<string>('All');
     const [filterCategory, setFilterCategory] = useState<string>('All');
