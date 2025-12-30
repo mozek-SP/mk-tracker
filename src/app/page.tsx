@@ -234,8 +234,15 @@ export default function Page() {
 
     return (
         <div className="flex min-h-screen bg-[#0F172A] text-slate-200 font-sans">
+            {/* Background Ambience */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden select-none">
+                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand/5 blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute top-[20%] right-[0%] w-[40%] h-[40%] rounded-full bg-blue-600/5 blur-[120px] animate-pulse-slow delay-1000"></div>
+                <div className="absolute bottom-[0%] left-[20%] w-[30%] h-[30%] rounded-full bg-emerald-500/5 blur-[100px] animate-pulse-slow delay-2000"></div>
+            </div>
+
             {/* Sidebar - Desktop */}
-            <aside className="fixed left-0 top-0 hidden h-full w-64 flex-col border-r border-slate-800 bg-[#0F172A] lg:flex">
+            <aside className="fixed left-0 top-0 hidden h-full w-64 flex-col border-r border-slate-800/60 bg-[#0F172A]/90 backdrop-blur-xl lg:flex z-40 shadow-2xl">
                 <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} setLang={setLang} t={t} />
             </aside>
 
@@ -254,14 +261,20 @@ export default function Page() {
             )}
 
             {/* Main Container */}
-            <main className="flex-1 lg:pl-64 min-w-0">
-                <header className="sticky top-0 z-30 border-b border-slate-800 bg-[#0F172A]/80 px-4 sm:px-8 py-4 backdrop-blur-md">
+            <main className="flex-1 lg:pl-64 min-w-0 relative z-10">
+                <header className="sticky top-0 z-30 border-b border-white/5 bg-[#0F172A]/80 px-4 sm:px-8 py-4 backdrop-blur-md shadow-sm">
                     <div className="flex items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 lg:hidden text-slate-400 hover:text-white transition-colors">
                                 <Menu size={24} />
                             </button>
-                            <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
+                            <h2 className="text-lg sm:text-2xl font-bold text-white truncate flex items-center gap-3">
+                                {activeTab === 'dashboard' && <LayoutDashboard className="text-brand" size={28} />}
+                                {activeTab === 'branches' && <Store className="text-brand" size={28} />}
+                                {activeTab === 'machines' && <Cpu className="text-brand" size={28} />}
+                                {activeTab === 'expenses' && <Receipt className="text-brand" size={28} />}
+                                {activeTab === 'parts' && <Package className="text-brand" size={28} />}
+
                                 {activeTab === 'dashboard' ? t('Overview', 'ภาพรวมระบบ') :
                                     activeTab === 'branches' ? t('Branches', 'จัดการสาขา') :
                                         activeTab === 'machines' ? t('Machines', 'จัดการอุปกรณ์') :
@@ -271,14 +284,11 @@ export default function Page() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <button onClick={handleExport} className="p-2 text-slate-400 hover:text-brand transition-colors" title={t('Export Excel', 'ส่งออกไฟล์')}>
-                                <Download size={20} />
-                            </button>
                             <div className="relative hidden sm:block">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                                 <Input
                                     placeholder={t('Search...', 'ค้นหา...')}
-                                    className="w-48 md:w-64 pl-10 rounded-xl bg-slate-900/50 border-slate-700/50 focus:border-brand focus:ring-brand/20 transition-all"
+                                    className="w-48 md:w-64 pl-10 rounded-full bg-slate-900/50 border-slate-700/50 focus:border-brand focus:ring-brand/20 transition-all shadow-inner"
                                     value={globalSearch}
                                     onChange={(e) => setGlobalSearch(e.target.value)}
                                 />
@@ -326,19 +336,21 @@ export default function Page() {
                                                 activeTab === 'expenses' ? filteredExpenses.length : filteredParts.length})
                                     </span>
                                 </h3>
-                                <div className="flex gap-2">
-                                    <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : 'part')} className="gap-2 bg-brand hover:bg-brand/90 hover:shadow-lg hover:shadow-brand/20 transition-all active:scale-95 text-white h-10 px-4 rounded-xl font-bold">
+                                <div className="flex flex-wrap gap-2">
+                                    <button onClick={handleExport} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-emerald-600/10 text-emerald-500 border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/30 active:scale-95" title={t('Export Excel', 'ส่งออกไฟล์')}>
+                                        <Download size={16} className="mb-0.5" /> {t('Export', 'ส่งออก')}
+                                    </button>
+                                    <button onClick={handleDownloadTemplate} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-blue-600/10 text-blue-500 border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-blue-500/10 hover:shadow-blue-500/30 active:scale-95" title={t('Download Template', 'ดาวน์โหลดเทมเพลต')}>
+                                        <FileSpreadsheet size={16} className="mb-0.5" /> {t('Template', 'เทมเพลต')}
+                                    </button>
+                                    <label className="flex items-center gap-2 px-4 h-10 rounded-lg bg-purple-600/10 text-purple-500 border border-purple-600/20 hover:bg-purple-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-purple-500/10 hover:shadow-purple-500/30 active:scale-95 cursor-pointer">
+                                        <Upload size={16} className="mb-0.5" /> {t('Import', 'นำเข้า')}
+                                        <input type="file" hidden accept=".xlsx, .xls" onChange={handleImport} />
+                                    </label>
+                                    <div className="w-px h-10 bg-slate-800 mx-1 hidden sm:block"></div>
+                                    <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : 'part')} className="gap-2 bg-gradient-to-r from-brand to-orange-600 hover:to-orange-500 hover:shadow-orange-500/25 shadow-lg transition-all active:scale-95 text-white h-10 px-5 rounded-lg font-bold uppercase tracking-wide">
                                         <Plus size={18} /> {t('Add New', 'เพิ่มใหม่')}
                                     </Button>
-                                    <div className="flex gap-2">
-                                        <button onClick={handleDownloadTemplate} className="flex items-center gap-2 px-3 h-10 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all text-xs font-bold" title={t('Download Template', 'ดาวน์โหลดเทมเพลต')}>
-                                            <FileSpreadsheet size={16} /> {t('Template', 'เทมเพลต')}
-                                        </button>
-                                        <label className="flex items-center gap-2 px-3 h-10 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all text-xs font-bold cursor-pointer">
-                                            <Upload size={16} /> {t('Import', 'นำเข้า')}
-                                            <input type="file" hidden accept=".xlsx, .xls" onChange={handleImport} />
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
 
@@ -349,20 +361,22 @@ export default function Page() {
                         </div>
                     )}
                 </div>
-            </main>
+            </main >
 
             {/* --- CRUD MODAL --- */}
-            {isModalOpen && (
-                <EntityModal
-                    type={modalType}
-                    item={editingItem}
-                    branches={branches}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={saveItem}
-                    t={t}
-                />
-            )}
-        </div>
+            {
+                isModalOpen && (
+                    <EntityModal
+                        type={modalType}
+                        item={editingItem}
+                        branches={branches}
+                        onClose={() => setIsModalOpen(false)}
+                        onSave={saveItem}
+                        t={t}
+                    />
+                )
+            }
+        </div >
     );
 }
 
@@ -760,7 +774,7 @@ const FormGroup = ({ label, value, onChange, type = "text" }: any) => (
 );
 
 const TableBase = ({ children }: { children: React.ReactNode }) => (
-    <Card className="p-0 border-slate-800 bg-slate-900/40 overflow-hidden shadow-subtle">
+    <Card className="p-0 border-slate-800/60 bg-slate-900/40 overflow-hidden shadow-premium backdrop-blur-sm ring-1 ring-white/5">
         <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-sm whitespace-nowrap">
                 {children}
