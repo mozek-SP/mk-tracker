@@ -519,7 +519,7 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
         amount: 0,
         phase: '1',
         zone: 'BKK',
-        name: '', sn: '', province: '', phone: '', detail: '', technician: '', device: '', partName: ''
+        code: '', name: '', province: '', phone: '', detail: '', technician: '', device: '', partName: '', remark: ''
     });
 
     const [otherFields, setOtherFields] = useState<Record<string, boolean>>({});
@@ -559,16 +559,36 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
 
                     {type === 'branch' && (
                         <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormGroup label={t('Branch Code', 'รหัสสาขา')} value={formData.code} onChange={(v: any) => setFormData({ ...formData, code: v })} />
+                                <div className="flex-1">
+                                    <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Branch Type', 'ประเภทสาขา')}</label>
+                                    {otherFields.type ? (
+                                        <Input autoFocus placeholder="Enter Type" className="bg-slate-800/80 border-brand/50 h-11" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} />
+                                    ) : (
+                                        <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.type} onChange={e => handleSelectChange('type', e.target.value)}>
+                                            <option value="MK Restaurant">MK Restaurant</option>
+                                            <option value="MK Gold">MK Gold</option>
+                                            <option value="MK Live">MK Live</option>
+                                            <option value="Bonus Suki">Bonus Suki</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    )}
+                                </div>
+                            </div>
+
                             <FormGroup label={t('Branch Name', 'ชื่อสาขา')} value={formData.name} onChange={(v: any) => setFormData({ ...formData, name: v })} />
+
                             <div className="grid grid-cols-2 gap-4">
                                 <FormGroup label={t('Province', 'จังหวัด')} value={formData.province} onChange={(v: any) => setFormData({ ...formData, province: v })} />
                                 <FormGroup label={t('Phone', 'เบอร์โทร')} value={formData.phone} onChange={(v: any) => setFormData({ ...formData, phone: v })} />
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Phase', 'เฟส')}</label>
                                     <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.phase} onChange={e => setFormData({ ...formData, phase: e.target.value })}>
-                                        {['1', '2', '3', '4', '5', '6', '7', '8', 'Renovate'].map(p => <option key={p} value={p}>{p}</option>)}
+                                        {['1', '2', '3', '4', '5', '6', '7', '8', 'Renovate', 'ปิดสาขา'].map(p => <option key={p} value={p}>{p}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -583,12 +603,26 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
 
                     {type === 'machine' && (
                         <>
-                            <FormGroup label={t('Asset Name', 'ชื่ออุปกรณ์')} value={formData.name} onChange={(v: any) => setFormData({ ...formData, name: v })} />
+                            <div>
+                                <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Asset Name', 'ชื่ออุปกรณ์')}</label>
+                                {otherFields.name ? (
+                                    <Input autoFocus placeholder="Enter Asset Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                ) : (
+                                    <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.name} onChange={e => handleSelectChange('name', e.target.value)}>
+                                        <option value="CI-10">CI-10</option>
+                                        <option value="CI-5">CI-5</option>
+                                        <option value="RK-10">RK-10</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                )}
+                            </div>
+
                             <FormGroup label={t('Serial Number', 'หมายเลขเครื่อง')} value={formData.sn} onChange={(v: any) => setFormData({ ...formData, sn: v })} />
                             <FormGroup label={t('Install Date', 'วันที่ติดตั้ง')} type="date" value={formData.installDate} onChange={(v: any) => setFormData({ ...formData, installDate: v })} />
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">System</label>
+                                    <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">POS System</label>
                                     {otherFields.pos ? (
                                         <Input autoFocus placeholder="Enter System Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.pos} onChange={e => setFormData({ ...formData, pos: e.target.value })} />
                                     ) : (
@@ -599,11 +633,19 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
                                 </div>
                                 <div>
                                     <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">Status</label>
-                                    <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
-                                        <option value="Ready">Ready</option><option value="Repair">Repair</option><option value="Cancel">Cancel</option>
-                                    </select>
+                                    {otherFields.status ? (
+                                        <Input autoFocus placeholder="Enter Status" className="bg-slate-800/80 border-brand/50 h-11" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} />
+                                    ) : (
+                                        <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.status} onChange={e => handleSelectChange('status', e.target.value)}>
+                                            <option value="พร้อมใช้งาน">พร้อมใช้งาน</option>
+                                            <option value="รอซ่อม">รอซ่อม</option>
+                                            <option value="ยกเลิกการใช้งาน">ยกเลิกการใช้งาน</option>
+                                            <option value="Other">อื่น ๆ</option>
+                                        </select>
+                                    )}
                                 </div>
                             </div>
+                            <FormGroup label={t('Remark', 'หมายเหตุ')} value={formData.remark} onChange={(v: any) => setFormData({ ...formData, remark: v })} />
                         </>
                     )}
 
@@ -725,32 +767,72 @@ const TableRow = ({ children, onEdit, onDelete }: any) => (
 const BranchListView = ({ branches, onEdit, onDelete, t }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr><th className="px-6 py-4 tracking-tighter">{t('Branch Name', 'ชื่อสาขา')}</th><th className="px-6 py-4">{t('Province', 'จังหวัด')}</th><th className="px-6 py-4 text-center">Phase</th><th className="px-6 py-4 text-right">Actions</th></tr>
+            <tr>
+                <th className="px-6 py-4">{t('Code', 'รหัส')}</th>
+                <th className="px-6 py-4">{t('Name', 'ชื่อสาขา')}</th>
+                <th className="px-6 py-4">{t('Type', 'ประเภท')}</th>
+                <th className="px-6 py-4">{t('Province', 'จังหวัด')}</th>
+                <th className="px-6 py-4 text-center">{t('Zone', 'โซน')}</th>
+                <th className="px-6 py-4 text-center">{t('Phase', 'เฟส')}</th>
+                <th className="px-6 py-4">{t('Phone', 'โทรศัพท์')}</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {branches.map((b: any) => (
                 <TableRow key={b.id} onEdit={() => onEdit(b)} onDelete={() => onDelete(b.id)}>
-                    <td className="px-6 py-4 font-bold text-white pr-10">{b.name}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{b.code}</td>
+                    <td className="px-6 py-4 font-bold text-white">{b.name}</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{b.type}</td>
                     <td className="px-6 py-4 text-slate-400">{b.province}</td>
+                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-500">{b.zone}</td>
                     <td className="px-6 py-4 text-center"><Badge className="bg-slate-800 text-slate-300 border-slate-700 font-mono tracking-tighter">{b.phase}</Badge></td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{b.phone}</td>
                 </TableRow>
             ))}
         </tbody>
     </TableBase>
 );
 
+function calculateAge(dateString: string) {
+    if (!dateString) return '-';
+    try {
+        const install = parseISO(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - install.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const years = Math.floor(diffDays / 365);
+        const months = Math.floor((diffDays % 365) / 30);
+        return `${years}Y ${months}M`;
+    } catch (e) { return '-'; }
+}
+
 const MachineListView = ({ machines, branches, onEdit, onDelete, t }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr><th className="px-6 py-4">Asset</th><th className="px-6 py-4">Serial Number</th><th className="px-6 py-4">Branch</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Actions</th></tr>
+            <tr>
+                <th className="px-6 py-4">Branch</th>
+                <th className="px-6 py-4">Asset</th>
+                <th className="px-6 py-4">S/N</th>
+                <th className="px-6 py-4 text-center">Install</th>
+                <th className="px-6 py-4 text-center">Age</th>
+                <th className="px-6 py-4 text-center">POS</th>
+                <th className="px-6 py-4 text-center">Status</th>
+                <th className="px-6 py-4">Remark</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {machines.map((m: any) => (
                 <TableRow key={m.id} onEdit={() => onEdit(m)} onDelete={() => onDelete(m.id)}>
+                    <td className="px-6 py-4 text-slate-400 font-bold">{branches.find((b: any) => b.id === m.branchId)?.name}</td>
                     <td className="px-6 py-4 font-bold text-white">{m.name}</td>
                     <td className="px-6 py-4 font-mono text-slate-500 text-xs">{m.sn}</td>
-                    <td className="px-6 py-4 text-slate-400 font-semibold">{branches.find((b: any) => b.id === m.branchId)?.name}</td>
-                    <td className="px-6 py-4"><Badge variant={m.status === 'Ready' ? 'success' : 'error'} className="font-bold tracking-tighter uppercase whitespace-nowrap">{m.status}</Badge></td>
+                    <td className="px-6 py-4 text-center text-xs text-slate-500">{m.installDate}</td>
+                    <td className="px-6 py-4 text-center text-xs font-mono text-brand">{calculateAge(m.installDate)}</td>
+                    <td className="px-6 py-4 text-center text-xs text-slate-400">{m.pos}</td>
+                    <td className="px-6 py-4 text-center"><Badge variant={m.status === 'พร้อมใช้งาน' ? 'success' : m.status === 'รอซ่อม' ? 'error' : 'default'} className="font-bold tracking-tighter uppercase whitespace-nowrap text-[10px]">{m.status}</Badge></td>
+                    <td className="px-6 py-4 text-xs text-slate-500 italic max-w-[150px] truncate">{m.remark}</td>
                 </TableRow>
             ))}
         </tbody>
