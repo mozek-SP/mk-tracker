@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+    --color-brand: #F97316;
+    --color-brand-muted: rgba(249, 115, 22, 0.1);
+    --font-prompt: var(--font-prompt), "Prompt", sans-serif;
+    --font-inter: var(--font-inter), "Inter", sans-serif;
+
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+    body {
+        @apply bg-slate-950 text-slate-200 antialiased;
+        font-family: var(--font-inter), var(--font-prompt), sans-serif;
+    }
+}
+
+@layer components {
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        @apply bg-slate-900;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+    }
+
+    .animate-in {
+        animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}
