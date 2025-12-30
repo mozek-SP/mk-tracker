@@ -420,7 +420,7 @@ const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile }:
 
 const DashboardView = ({ branches, machines, expenses, t }: any) => {
     const totalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
-    const repairCosts = expenses.filter((e: any) => e.type === 'Repair').reduce((sum: number, e: any) => sum + e.amount, 0);
+    const repairCosts = expenses.filter((e: any) => e.type === 'ค่าซ่อมแซม' || e.type === 'Repair').reduce((sum: number, e: any) => sum + e.amount, 0);
 
     const chartData = useMemo(() => {
         if (!expenses.length) return [];
@@ -481,9 +481,9 @@ const DashboardView = ({ branches, machines, expenses, t }: any) => {
                             <PieChart>
                                 <Pie
                                     data={[
-                                        { name: 'Ready', value: machines.filter((m: any) => m.status === 'Ready').length },
-                                        { name: 'Repair', value: machines.filter((m: any) => m.status === 'Repair').length },
-                                        { name: 'Other', value: machines.filter((m: any) => !['Ready', 'Repair'].includes(m.status)).length },
+                                        { name: 'Ready', value: machines.filter((m: any) => m.status === 'Ready' || m.status === 'พร้อมใช้งาน').length },
+                                        { name: 'Repair', value: machines.filter((m: any) => m.status === 'Repair' || m.status === 'รอซ่อม').length },
+                                        { name: 'Other', value: machines.filter((m: any) => !['Ready', 'Repair', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length },
                                     ]}
                                     innerRadius={70} outerRadius={90} paddingAngle={8} dataKey="value"
                                 >
@@ -500,9 +500,9 @@ const DashboardView = ({ branches, machines, expenses, t }: any) => {
                         </div>
                     </div>
                     <div className="mt-10 space-y-4">
-                        <PieLegend label="Ready" value={machines.filter((m: any) => m.status === 'Ready').length} color="bg-emerald-500" />
-                        <PieLegend label="Repairing" value={machines.filter((m: any) => m.status === 'Repair').length} color="bg-rose-500" />
-                        <PieLegend label="Other" value={machines.filter((m: any) => !['Ready', 'Repair'].includes(m.status)).length} color="bg-slate-500" />
+                        <PieLegend label="พร้อมใช้งาน (Ready)" value={machines.filter((m: any) => m.status === 'Ready' || m.status === 'พร้อมใช้งาน').length} color="bg-emerald-500" />
+                        <PieLegend label="กำลังซ่อม (Repair)" value={machines.filter((m: any) => m.status === 'Repair' || m.status === 'รอซ่อม').length} color="bg-rose-500" />
+                        <PieLegend label="อื่นๆ (Other)" value={machines.filter((m: any) => !['Ready', 'Repair', 'พร้อมใช้งาน', 'รอซ่อม'].includes(m.status)).length} color="bg-slate-500" />
                     </div>
                 </Card>
             </div>
