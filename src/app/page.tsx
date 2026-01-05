@@ -95,7 +95,7 @@ export default function Page() {
     // --- Filter State ---
     const [globalSearch, setGlobalSearch] = useState('');
     const [filterMonth, setFilterMonth] = useState<string>('All');
-    const [filterYear, setFilterYear] = useState<string>(format(new Date(), 'yyyy'));
+    const [filterYear, setFilterYear] = useState<string>('All');
     const [filterPhase, setFilterPhase] = useState<string>('All');
     const [filterBranchId, setFilterBranchId] = useState<string>('All');
     const [filterCategory, setFilterCategory] = useState<string>('All');
@@ -133,12 +133,20 @@ export default function Page() {
     const filterByCommon = (item: any, dateField: string = 'date') => {
         const branch = branches.find(b => b.id === item.branchId);
         let itemDate;
-        try { itemDate = parseISO(item[dateField]); } catch (e) { itemDate = new Date(); }
+        try {
+            // Handle if it's already a Date object from DB or a string
+            itemDate = typeof item[dateField] === 'string' ? parseISO(item[dateField]) : new Date(item[dateField]);
+            if (isNaN(itemDate.getTime())) itemDate = new Date();
+        } catch (e) {
+            itemDate = new Date();
+        }
         const m = format(itemDate, 'MM');
         const y = format(itemDate, 'yyyy');
 
         const matchesSearch = globalSearch === '' ||
             (item.name?.toLowerCase().includes(globalSearch.toLowerCase())) ||
+            (item.partName?.toLowerCase().includes(globalSearch.toLowerCase())) ||
+            (item.device?.toLowerCase().includes(globalSearch.toLowerCase())) ||
             (item.sn?.toLowerCase().includes(globalSearch.toLowerCase())) ||
             (branch?.name.toLowerCase().includes(globalSearch.toLowerCase())) ||
             (item.detail?.toLowerCase().includes(globalSearch.toLowerCase()));
@@ -383,8 +391,12 @@ export default function Page() {
                     </div>
 
                     <div className="flex flex-wrap items-end gap-3 text-xs overflow-x-auto pb-1 custom-scrollbar no-scrollbar-on-mobile">
-                        <FilterSelect value={filterYear} onChange={setFilterYear} options={['All', ...years]} label={t('Year', 'ปี')} />
-                        <FilterSelect value={filterMonth} onChange={setFilterMonth} options={[{ v: 'All', l: t('All', 'ทุกเดือน') }, ...months]} label={t('Month', 'เดือน')} />
+                        {!['branches', 'machines'].includes(activeTab) && (
+                            <>
+                                <FilterSelect value={filterYear} onChange={setFilterYear} options={['All', ...years]} label={t('Year', 'ปี')} />
+                                <FilterSelect value={filterMonth} onChange={setFilterMonth} options={[{ v: 'All', l: t('All', 'ทุกเดือน') }, ...months]} label={t('Month', 'เดือน')} />
+                            </>
+                        )}
                         <FilterSelect value={filterPhase} onChange={setFilterPhase} options={['All', '1', '2', '3', '4', '5', '6', '7', '8', 'Renovate']} label={t('Phase', 'เฟส')} />
                         <FilterSelect
                             value={filterBranchId}
@@ -509,14 +521,19 @@ const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile }:
 
 const DashboardView = ({ branches, machines, expenses, t }: any) => {
     const totalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
-    const repairCosts = expenses.filter((e: any) => e.type === 'ค่าซ่อมแซม' || e.type === 'Repair').reduce((sum: number, e: any) => sum + e.amount, 0);
+    const repairCosts = expenses.filter((e: any) =>
+        e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าอะไหล่' || e.type === 'Spare Parts'
+    ).reduce((sum: number, e: any) => sum + e.amount, 0);
 
     const chartData = useMemo(() => {
         if (!expenses.length) return [];
         const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
         return months.map(m => ({
             name: m,
-            amount: expenses.filter((e: any) => format(parseISO(e.date), 'MM') === m).reduce((s: number, e: any) => s + e.amount, 0)
+            amount: expenses.filter((e: any) => {
+                const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
+                return format(d, 'MM') === m;
+            }).reduce((s: number, e: any) => s + e.amount, 0)
         }));
     }, [expenses]);
 
