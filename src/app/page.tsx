@@ -126,11 +126,14 @@ export default function Page() {
     }, [activeTab]);
 
     // --- Filtering Logic ---
-    const filteredBranches = useMemo(() => branches.filter(b => {
-        const matchesSearch = globalSearch === '' || b.name.toLowerCase().includes(globalSearch.toLowerCase());
-        const matchesPhase = filterPhase === 'All' || b.phase === filterPhase;
-        return matchesSearch && matchesPhase;
-    }), [branches, globalSearch, filterPhase]);
+    const filteredBranches = useMemo(() => branches
+        .filter(b => {
+            const matchesSearch = globalSearch === '' || b.name.toLowerCase().includes(globalSearch.toLowerCase());
+            const matchesPhase = filterPhase === 'All' || b.phase === filterPhase;
+            return matchesSearch && matchesPhase;
+        })
+        .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }))
+        , [branches, globalSearch, filterPhase]);
 
     const filterByCommon = (item: any, dateField: string = 'date') => {
         const branch = branches.find(b => b.id === item.branchId);
@@ -161,7 +164,16 @@ export default function Page() {
         return matchesSearch && matchesMonth && matchesYear && matchesPhase && matchesBranch;
     };
 
-    const filteredMachines = useMemo(() => machines.filter(m => filterByCommon(m, 'installDate')), [machines, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
+    const filteredMachines = useMemo(() => machines
+        .filter(m => filterByCommon(m, 'installDate'))
+        .sort((a, b) => {
+            const branchA = branches.find(br => br.id === a.branchId);
+            const branchB = branches.find(br => br.id === b.branchId);
+            const codeA = branchA?.code || '';
+            const codeB = branchB?.code || '';
+            return codeA.localeCompare(codeB, undefined, { numeric: true });
+        })
+        , [machines, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
     const filteredExpenses = useMemo(() => expenses.filter(e => filterByCommon(e) && (filterCategory === 'All' || e.type === filterCategory)), [expenses, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
     const filteredParts = useMemo(() => parts.filter(p => filterByCommon(p) && (filterCategory === 'All' || p.device === filterCategory)), [parts, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
 
