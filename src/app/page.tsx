@@ -37,11 +37,12 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
-    mockBranches,
-    mockMachines,
-    mockExpenses,
-    mockSpareParts,
-} from '../utils/mockData';
+    getBranches, upsertBranch, deleteBranch,
+    getMachines, upsertMachine, deleteMachine,
+    getExpenses, upsertExpense, deleteExpense,
+    getSpareParts, upsertSparePart, deleteSparePart,
+    clearAll, bulkInsert
+} from './actions';
 import {
     Branch,
     Machine,
@@ -62,35 +63,34 @@ export default function Page() {
     const [lang, setLang] = useState<Lang>('EN');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    const [branches, setBranches] = useState<Branch[]>(mockBranches);
-    const [machines, setMachines] = useState<Machine[]>(mockMachines);
-    const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
-    const [parts, setParts] = useState<SparePart[]>(mockSpareParts);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [machines, setMachines] = useState<Machine[]>([]);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [parts, setParts] = useState<SparePart[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // --- Persistence ---
-    useEffect(() => {
-        const savedBranches = localStorage.getItem('mk_branches');
-        const savedMachines = localStorage.getItem('mk_machines');
-        const savedExpenses = localStorage.getItem('mk_expenses');
-        const savedParts = localStorage.getItem('mk_parts');
-
-        if (savedBranches) setBranches(JSON.parse(savedBranches));
-        if (savedMachines) setMachines(JSON.parse(savedMachines));
-        if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
-        if (savedParts) setParts(JSON.parse(savedParts));
-
+    // --- Data Fetching ---
+    const refreshData = async () => {
+        const [b, m, e, p] = await Promise.all([
+            getBranches(),
+            getMachines(),
+            getExpenses(),
+            getSpareParts()
+        ]);
+        setBranches(b as Branch[]);
+        setMachines(m as Machine[]);
+        setExpenses((e as any[]).map(item => ({ ...item, amount: parseFloat(item.amount) })));
+        setParts((p as any[]).map(item => ({
+            ...item,
+            unitPrice: parseFloat(item.unitPrice),
+            totalPrice: parseFloat(item.totalPrice)
+        })));
         setIsLoaded(true);
-    }, []);
+    };
 
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('mk_branches', JSON.stringify(branches));
-            localStorage.setItem('mk_machines', JSON.stringify(machines));
-            localStorage.setItem('mk_expenses', JSON.stringify(expenses));
-            localStorage.setItem('mk_parts', JSON.stringify(parts));
-        }
-    }, [branches, machines, expenses, parts, isLoaded]);
+        refreshData();
+    }, []);
 
     // --- Filter State ---
     const [globalSearch, setGlobalSearch] = useState('');
@@ -168,52 +168,53 @@ export default function Page() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (type: string, id: string) => {
+    const handleDelete = async (type: string, id: string) => {
         if (!confirm(t('Are you sure you want to delete?', 'คุณแน่ใจหรือไม่ว่าต้องการลบ?'))) return;
-        if (type === 'branch') setBranches(prev => prev.filter(i => i.id !== id));
-        if (type === 'machine') setMachines(prev => prev.filter(i => i.id !== id));
-        if (type === 'expense') setExpenses(prev => prev.filter(i => i.id !== id));
-        if (type === 'part') setParts(prev => prev.filter(i => i.id !== id));
+
+        let res;
+        if (type === 'branch') res = await deleteBranch(id);
+        if (type === 'machine') res = await deleteMachine(id);
+        if (type === 'expense') res = await deleteExpense(id);
+        if (type === 'part') res = await deleteSparePart(id);
+
+        if (res?.success) refreshData();
     };
 
-    const handleClearAll = () => {
-        // Double confirm for safety
+    const handleClearAll = async () => {
         if (!confirm(t('WARNING: This will delete ALL items in this list.\nAre you sure?', 'คำเตือน: การกระทำนี้จะลบข้อมูล "ทั้งหมด" ในหน้านี้\nคุณแน่ใจหรือไม่?'))) return;
         if (!confirm(t('Final Confirmation: Delete everything?', 'ยืนยันครั้งสุดท้าย: ลบข้อมูลทั้งหมดจริงหรือไม่?'))) return;
 
-        if (activeTab === 'branches') setBranches([]);
-        if (activeTab === 'machines') setMachines([]);
-        if (activeTab === 'expenses') setExpenses([]);
-        if (activeTab === 'parts') setParts([]);
+        let res;
+        if (activeTab === 'branches') res = await clearAll('branches');
+        if (activeTab === 'machines') res = await clearAll('machines');
+        if (activeTab === 'expenses') res = await clearAll('expenses');
+        if (activeTab === 'parts') res = await clearAll('parts');
+
+        if (res?.success) refreshData();
     };
 
-    const saveItem = (data: any) => {
+    const saveItem = async (data: any) => {
         const type = modalType;
-        const isEdit = !!editingItem;
+        let res;
 
-        if (type === 'branch') {
-            if (isEdit) setBranches(prev => prev.map(i => i.id === data.id ? data : i));
-            else setBranches(prev => [...prev, { ...data, id: Math.random().toString(36).substr(2, 9) }]);
-        } else if (type === 'machine') {
-            if (isEdit) setMachines(prev => prev.map(i => i.id === data.id ? data : i));
-            else setMachines(prev => [...prev, { ...data, id: 'M' + Math.random().toString(36).substr(2, 5) }]);
-        } else if (type === 'expense') {
-            if (isEdit) setExpenses(prev => prev.map(i => i.id === data.id ? data : i));
-            else setExpenses(prev => [...prev, { ...data, id: 'E' + Math.random().toString(36).substr(2, 5) }]);
-        } else if (type === 'part') {
-            if (isEdit) setParts(prev => prev.map(i => i.id === data.id ? data : i));
-            else setParts(prev => [...prev, { ...data, id: 'S' + Math.random().toString(36).substr(2, 5), totalPrice: data.qty * data.unitPrice }]);
+        if (type === 'branch') res = await upsertBranch(data);
+        else if (type === 'machine') res = await upsertMachine(data);
+        else if (type === 'expense') res = await upsertExpense(data);
+        else if (type === 'part') res = await upsertSparePart(data);
+
+        if (res?.success) {
+            refreshData();
+            // Auto-Reset Filters on Save so user sees the new item
+            setFilterYear('All');
+            setFilterMonth('All');
+            setFilterPhase('All');
+            setFilterBranchId('All');
+            setFilterCategory('All');
+            setGlobalSearch('');
+            setIsModalOpen(false);
+        } else {
+            alert(t('Save Failed!', 'บันทึกข้อมูลล้มเหลว!'));
         }
-
-        // Auto-Reset Filters on Save so user sees the new item
-        setFilterYear('All');
-        setFilterMonth('All');
-        setFilterPhase('All');
-        setFilterBranchId('All');
-        setFilterCategory('All');
-        setGlobalSearch('');
-
-        setIsModalOpen(false);
     };
 
     // --- Excel Handlers ---
@@ -236,84 +237,73 @@ export default function Page() {
 
             // Helper to parse Excel dates (which might be Numbers or Strings)
             const excelDateToJSDate = (serial: any) => {
-                if (!serial) return format(new Date(), 'yyyy-MM-dd'); // Default to today if missing
+                if (!serial) return format(new Date(), 'yyyy-MM-dd');
                 if (typeof serial === 'number') {
-                    // Excel serial date to JS Date
                     const utc_days = Math.floor(serial - 25569);
                     const utc_value = utc_days * 86400;
                     const date_info = new Date(utc_value * 1000);
                     return format(date_info, 'yyyy-MM-dd');
                 }
-                // Handle DD/MM/YYYY string format (e.g. 22/10/2021)
                 if (typeof serial === 'string' && serial.includes('/')) {
                     const parts = serial.split('/');
                     if (parts.length === 3) {
                         try {
-                            // Assume DD/MM/YYYY
                             const day = parseInt(parts[0], 10);
-                            const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                            const month = parseInt(parts[1], 10) - 1;
                             const year = parseInt(parts[2], 10);
                             const dateObj = new Date(year, month, day);
-                            if (!isNaN(dateObj.getTime())) {
-                                return format(dateObj, 'yyyy-MM-dd');
-                            }
-                        } catch (e) { console.error('Date parse error', e); }
+                            if (!isNaN(dateObj.getTime())) return format(dateObj, 'yyyy-MM-dd');
+                        } catch (e) { }
                     }
                 }
-                // Attempt to parse standard string/ISO
-                try { return format(new Date(serial), 'yyyy-MM-dd'); } catch { return format(new Date(), 'yyyy-MM-dd'); }
+                return format(new Date(serial), 'yyyy-MM-dd');
             };
 
-            // Helper to match Branch Name if ID is missing or text
             const findBranchId = (val: any) => {
                 const found = branches.find(b => b.name === val || b.code === val || b.id === val);
-                return found ? found.id : val; // Return Found ID or original value
+                return found ? found.id : val;
             };
 
+            let res;
             if (activeTab === 'branches') {
-                setBranches(prev => [...prev, ...data.map(d => ({
+                const formatted = data.map(d => ({
                     ...d,
-                    id: Math.random().toString(36).substr(2, 9),
-                    // Ensure crucial fields exist
                     phase: d.phase ? String(d.phase) : '1',
                     zone: d.zone || 'BKK'
-                }))]);
-            }
-            if (activeTab === 'machines') {
-                setMachines(prev => [...prev, ...data.map(d => ({
+                }));
+                res = await bulkInsert('branches', formatted);
+            } else if (activeTab === 'machines') {
+                const formatted = data.map(d => ({
                     ...d,
-                    id: 'M' + Math.random().toString(36).substr(2, 5),
                     branchId: findBranchId(d.branchId),
                     installDate: excelDateToJSDate(d.installDate)
-                }))]);
-            }
-            if (activeTab === 'expenses') {
-                setExpenses(prev => [...prev, ...data.map(d => ({
+                }));
+                res = await bulkInsert('machines', formatted);
+            } else if (activeTab === 'expenses') {
+                const formatted = data.map(d => ({
                     ...d,
-                    id: 'E' + Math.random().toString(36).substr(2, 5),
                     branchId: findBranchId(d.branchId),
                     date: excelDateToJSDate(d.date)
-                }))]);
-            }
-            if (activeTab === 'parts') {
-                setParts(prev => [...prev, ...data.map(d => ({
+                }));
+                res = await bulkInsert('expenses', formatted);
+            } else if (activeTab === 'parts') {
+                const formatted = data.map(d => ({
                     ...d,
-                    id: 'S' + Math.random().toString(36).substr(2, 5),
                     branchId: findBranchId(d.branchId),
                     date: excelDateToJSDate(d.date),
                     totalPrice: (d.qty || 0) * (d.unitPrice || 0)
-                }))]);
+                }));
+                res = await bulkInsert('parts', formatted);
             }
 
-            // AUTO-RESET FILTERS to ensure data is visible immediately
-            setFilterYear('All');
-            setFilterMonth('All');
-            setFilterPhase('All');
-            setFilterBranchId('All');
-            setFilterCategory('All');
-            setGlobalSearch('');
-
-            alert(t('Import Successful!', 'นำเข้าข้อมูลสำเร็จ!'));
+            if (res?.success) {
+                await refreshData();
+                setFilterYear('All');
+                setGlobalSearch('');
+                alert(t('Import Successful!', 'นำเข้าข้อมูลสำเร็จ!'));
+            } else {
+                alert(t('Import Failed!', 'นำเข้าข้อมูลล้มเหลว!'));
+            }
         } catch (err) {
             console.error(err);
             alert(t('Import Failed!', 'นำเข้าข้อมูลล้มเหลว!'));
