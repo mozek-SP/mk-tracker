@@ -531,7 +531,7 @@ export default function Page() {
                                 </div>
                             </div>
 
-                            {activeTab === 'branches' && <BranchListView branches={filteredBranches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('branch', i)} onDelete={(id: string) => handleDelete('branch', id)} t={t} />}
+                            {activeTab === 'branches' && <BranchListView branches={filteredBranches} machines={machines} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('branch', i)} onDelete={(id: string) => handleDelete('branch', id)} t={t} />}
                             {activeTab === 'machines' && <MachineListView machines={filteredMachines} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('machine', i)} onDelete={(id: string) => handleDelete('machine', id)} t={t} />}
                             {activeTab === 'expenses' && <ExpenseListView expenses={filteredExpenses} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('expense', i)} onDelete={(id: string) => handleDelete('expense', id)} t={t} />}
                             {activeTab === 'parts' && <SparePartsView parts={filteredParts} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('part', i)} onDelete={(id: string) => handleDelete('part', id)} t={t} />}
@@ -906,6 +906,11 @@ const EntityModal = ({ type, item, branches, machines, onClose, onSave, t }: any
                                     </select>
                                 </div>
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormGroup label={t('Warranty Start', 'เริมการรับประกัน')} type="date" value={formData.warrantyStart || ''} onChange={(v: any) => setFormData({ ...formData, warrantyStart: v })} />
+                                <FormGroup label={t('Warranty End', 'สิ้นสุดการรับประกัน')} type="date" value={formData.warrantyEnd || ''} onChange={(v: any) => setFormData({ ...formData, warrantyEnd: v })} />
+                            </div>
                         </>
                     )}
 
@@ -1152,35 +1157,63 @@ const TableRow = ({ children, onEdit, onDelete, isAdmin }: any) => (
     </tr>
 );
 
-const BranchListView = ({ branches, onEdit, onDelete, t, isAdmin }: any) => (
-    <TableBase>
-        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr>
-                <th className="px-6 py-4">{t('Code', 'รหัส')}</th>
-                <th className="px-6 py-4">{t('Name', 'ชื่อสาขา')}</th>
-                <th className="px-6 py-4">{t('Type', 'ประเภท')}</th>
-                <th className="px-6 py-4">{t('Province', 'จังหวัด')}</th>
-                <th className="px-6 py-4 text-center">{t('Zone', 'โซน')}</th>
-                <th className="px-6 py-4 text-center">{t('Phase', 'เฟส')}</th>
-                <th className="px-6 py-4">{t('Phone', 'โทรศัพท์')}</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-            {branches.map((b: any) => (
-                <TableRow key={b.id} onEdit={() => onEdit(b)} onDelete={() => onDelete(b.id)} isAdmin={isAdmin}>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{b.code}</td>
-                    <td className="px-6 py-4 font-bold text-white">{b.name}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">{b.type}</td>
-                    <td className="px-6 py-4 text-slate-400">{b.province}</td>
-                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-500">{b.zone}</td>
-                    <td className="px-6 py-4 text-center"><Badge className="bg-slate-800 text-slate-300 border-slate-700 font-mono tracking-tighter">{b.phase}</Badge></td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">{b.phone}</td>
-                </TableRow>
-            ))}
-        </tbody>
-    </TableBase>
-);
+const BranchListView = ({ branches, machines, onEdit, onDelete, t, isAdmin }: any) => {
+    return (
+        <TableBase>
+            <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                    <th className="px-6 py-4">{t('Code', 'รหัส')}</th>
+                    <th className="px-6 py-4">{t('Name', 'ชื่อสาขา')}</th>
+                    <th className="px-6 py-4">{t('Type', 'ประเภท')}</th>
+                    <th className="px-6 py-4">{t('S/N', 'S/N')}</th>
+                    <th className="px-6 py-4 text-center">{t('Phase', 'เฟส')}</th>
+                    <th className="px-6 py-4 text-center">{t('Warranty', 'การรับประกัน')}</th>
+                    <th className="px-6 py-4 text-center">{t('Period', 'ระยะเวลา')}</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+                {branches.map((b: any) => {
+                    const branchMachines = machines.filter((m: any) => m.branchId === b.id);
+                    const snList = branchMachines.map((m: any) => m.sn).join(', ');
+
+                    let warrantyStatus = 'N/A';
+                    let statusColor = 'bg-slate-800 text-slate-500';
+
+                    if (b.warrantyStart && b.warrantyEnd) {
+                        const now = new Date();
+                        const start = new Date(b.warrantyStart);
+                        const end = new Date(b.warrantyEnd);
+                        if (now >= start && now <= end) {
+                            warrantyStatus = 'Active';
+                            statusColor = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+                        } else {
+                            warrantyStatus = 'Expired';
+                            statusColor = 'bg-red-500/10 text-red-500 border-red-500/20';
+                        }
+                    }
+
+                    return (
+                        <TableRow key={b.id} onEdit={() => onEdit(b)} onDelete={() => onDelete(b.id)} isAdmin={isAdmin}>
+                            <td className="px-6 py-4 font-mono text-xs text-slate-400">{b.code}</td>
+                            <td className="px-6 py-4 font-bold text-white">{b.name}</td>
+                            <td className="px-6 py-4 text-slate-400 text-xs">{b.type}</td>
+                            <td className="px-6 py-4 text-xs font-mono text-brand max-w-[150px] truncate" title={snList}>{snList || '-'}</td>
+                            <td className="px-6 py-4 text-center"><Badge className="bg-slate-800 text-slate-300 border-slate-700 font-mono tracking-tighter">{b.phase}</Badge></td>
+                            <td className="px-6 py-4 text-center">
+                                <Badge className={cn("font-bold tracking-tighter border", statusColor)}>{warrantyStatus}</Badge>
+                            </td>
+                            <td className="px-6 py-4 text-center text-[10px] text-slate-500">
+                                {b.warrantyStart ? `${b.warrantyStart} - ${b.warrantyEnd}` : '-'}
+                            </td>
+                            {/* <td className="px-6 py-4 text-slate-400 text-xs">{b.phone}</td> */}
+                        </TableRow>
+                    );
+                })}
+            </tbody>
+        </TableBase>
+    );
+};
 
 function calculateAge(dateString: string) {
     if (!dateString) return '-';

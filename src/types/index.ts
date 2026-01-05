@@ -14,6 +14,8 @@ export interface Branch {
     type: string; // Use string to allow custom directly or handle in UI
     phase: string;
     zone: Zone;
+    warrantyStart?: string;
+    warrantyEnd?: string;
 }
 
 export interface Machine {

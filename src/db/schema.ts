@@ -11,6 +11,8 @@ export const branches = pgTable("branches", {
     type: text("type").notNull(), // MK Restaurant, MK Gold, etc.
     phase: text("phase").notNull(), // 1, 2, ..., Renovate
     zone: text("zone").notNull(), // BKK, UPC
+    warrantyStart: date("warranty_start"),
+    warrantyEnd: date("warranty_end"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
