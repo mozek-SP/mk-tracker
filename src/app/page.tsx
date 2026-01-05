@@ -1157,16 +1157,21 @@ const SparePartsView = ({ parts, branches, onEdit, onDelete, t, isAdmin }: any) 
 );
 
 const LoginModal = ({ onClose, onLogin, t }: any) => {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Simple hardcoded password for now
-        if (password === 'admin' || password === '1234') {
+
+        // Simple hardcoded validation
+        const validUsername = username.toLowerCase() === 'admin';
+        const validPassword = password === 'admin' || password === 'mk1234';
+
+        if (validUsername && validPassword) {
             onLogin();
         } else {
-            setError('Invalid password');
+            setError('Invalid username or password');
         }
     };
 
@@ -1175,14 +1180,20 @@ const LoginModal = ({ onClose, onLogin, t }: any) => {
             <Card className="w-full max-w-sm bg-slate-900 border-slate-800 shadow-premium p-6">
                 <h3 className="text-xl font-bold text-white mb-4 text-center">Admin Login</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
+                    <div className="space-y-3">
+                        <Input
+                            autoFocus
+                            placeholder="Username"
+                            value={username}
+                            onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                            className="bg-slate-950 border-slate-800 focus:border-brand"
+                        />
                         <Input
                             type="password"
-                            autoFocus
-                            placeholder="Enter Password"
+                            placeholder="Password"
                             value={password}
                             onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                            className="text-center tracking-widest bg-slate-950 border-slate-800 focus:border-brand"
+                            className="bg-slate-950 border-slate-800 focus:border-brand"
                         />
                         {error && <p className="text-red-500 text-xs text-center mt-2">{error}</p>}
                     </div>
@@ -1195,3 +1206,4 @@ const LoginModal = ({ onClose, onLogin, t }: any) => {
         </div>
     );
 };
+
