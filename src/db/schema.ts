@@ -57,3 +57,16 @@ export const spareParts = pgTable("spare_parts", {
     updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
+// Corrective Maintenance (CM) Table
+export const cms = pgTable("cms", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    branchId: text("branch_id").references(() => branches.id, { onDelete: 'cascade' }).notNull(),
+    machineId: text("machine_id").references(() => machines.id, { onDelete: 'cascade' }).notNull(),
+    date: date("date").notNull(),
+    symptom: text("symptom").notNull(),
+    solution: text("solution").notNull(),
+    technicians: text("technicians"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+

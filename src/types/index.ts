@@ -48,3 +48,13 @@ export interface SparePart {
     totalPrice: number;
     technician: string;
 }
+
+export interface CM {
+    id: string;
+    branchId: string;
+    machineId: string;
+    date: string;
+    symptom: string;
+    solution: string;
+    technicians: string;
+}

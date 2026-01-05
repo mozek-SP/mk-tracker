@@ -21,7 +21,8 @@ import {
     RefreshCw,
     Download,
     Upload,
-    FileSpreadsheet
+    FileSpreadsheet,
+    ClipboardList
 } from 'lucide-react';
 import {
     XAxis,
@@ -41,6 +42,7 @@ import {
     getMachines, upsertMachine, deleteMachine,
     getExpenses, upsertExpense, deleteExpense,
     getSpareParts, upsertSparePart, deleteSparePart,
+    getCms, upsertCm, deleteCm,
     clearAll, bulkInsert
 } from './actions';
 import {
@@ -48,13 +50,14 @@ import {
     Machine,
     Expense,
     SparePart,
+    CM,
 } from '../types';
 import { Button, Input, Card, Badge } from '../components/ui';
 import { cn } from '../utils/cn';
 import { exportToExcel, importFromExcel, downloadEntityTemplate } from '../utils/excel';
 
 // --- Types ---
-type Tab = 'dashboard' | 'branches' | 'machines' | 'expenses' | 'parts';
+type Tab = 'dashboard' | 'branches' | 'machines' | 'expenses' | 'parts' | 'cms';
 type Lang = 'TH' | 'EN';
 
 export default function Page() {
@@ -69,15 +72,17 @@ export default function Page() {
     const [machines, setMachines] = useState<Machine[]>([]);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [parts, setParts] = useState<SparePart[]>([]);
+    const [cms, setCms] = useState<CM[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
     // --- Data Fetching ---
     const refreshData = async () => {
-        const [b, m, e, p] = await Promise.all([
+        const [b, m, e, p, c] = await Promise.all([
             getBranches(),
             getMachines(),
             getExpenses(),
-            getSpareParts()
+            getSpareParts(),
+            getCms()
         ]);
         setBranches(b as Branch[]);
         setMachines(m as Machine[]);
@@ -87,6 +92,7 @@ export default function Page() {
             unitPrice: parseFloat(item.unitPrice),
             totalPrice: parseFloat(item.totalPrice)
         })));
+        setCms(c as CM[]);
         setIsLoaded(true);
     };
 
@@ -105,7 +111,7 @@ export default function Page() {
     // --- CRUD State ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
-    const [modalType, setModalType] = useState<Tab | 'branch' | 'machine' | 'expense' | 'part' | null>(null);
+    const [modalType, setModalType] = useState<Tab | 'branch' | 'machine' | 'expense' | 'part' | 'cm' | null>(null);
 
     // --- Helpers ---
     const t = (en: string, th: string) => (lang === 'EN' ? en : th);
@@ -176,6 +182,7 @@ export default function Page() {
         , [machines, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
     const filteredExpenses = useMemo(() => expenses.filter(e => filterByCommon(e) && (filterCategory === 'All' || e.type === filterCategory)), [expenses, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
     const filteredParts = useMemo(() => parts.filter(p => filterByCommon(p) && (filterCategory === 'All' || p.device === filterCategory)), [parts, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
+    const filteredCms = useMemo(() => cms.filter(c => filterByCommon(c)), [cms, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
 
     // --- CRUD Handlers ---
     const openAddModal = (type: any) => {
@@ -198,6 +205,7 @@ export default function Page() {
         if (type === 'machine') res = await deleteMachine(id);
         if (type === 'expense') res = await deleteExpense(id);
         if (type === 'part') res = await deleteSparePart(id);
+        if (type === 'cm') res = await deleteCm(id);
 
         if (res?.success) refreshData();
     };
@@ -211,6 +219,7 @@ export default function Page() {
         if (activeTab === 'machines') res = await clearAll('machines');
         if (activeTab === 'expenses') res = await clearAll('expenses');
         if (activeTab === 'parts') res = await clearAll('parts');
+        if (activeTab === 'cms') res = await clearAll('cms');
 
         if (res?.success) refreshData();
     };
@@ -223,6 +232,7 @@ export default function Page() {
         else if (type === 'machine') res = await upsertMachine(data);
         else if (type === 'expense') res = await upsertExpense(data);
         else if (type === 'part') res = await upsertSparePart(data);
+        else if (type === 'cm') res = await upsertCm(data);
 
         if (res?.success) {
             refreshData();
@@ -245,7 +255,8 @@ export default function Page() {
             branches: filteredBranches,
             machines: filteredMachines,
             expenses: filteredExpenses,
-            parts: filteredParts
+            parts: filteredParts,
+            cms: filteredCms
         };
         const rawData = activeTab === 'dashboard' ? expenses : dataMap[activeTab];
 
@@ -257,7 +268,7 @@ export default function Page() {
 
             // Resolve Branch Info
             if (branchId) {
-                // For Machines, Expenses, Parts (which have branchId)
+                // For Machines, Expenses, Parts, CMs
                 const branch = branches.find(b => b.id === branchId);
                 newItem = {
                     'Code': branch?.code || '',
@@ -265,13 +276,24 @@ export default function Page() {
                     ...newItem
                 };
             } else if (rest.code !== undefined && rest.name !== undefined) {
-                // For Branches (which have code and name directly)
+                // For Branches
                 const { code, name, ...others } = rest;
                 newItem = {
                     'Code': code,
                     'Name': name,
                     ...others
                 };
+            }
+
+            // Resolve Machine Name for CM
+            if (activeTab === 'cms' && item.machineId) {
+                const machine = machines.find((m: any) => m.id === item.machineId);
+                newItem = {
+                    ...newItem,
+                    'Machine': machine?.name || '',
+                    'S/N': machine?.sn || ''
+                }
+                delete newItem.machineId;
             }
 
             return newItem;
@@ -404,12 +426,14 @@ export default function Page() {
                                 {activeTab === 'machines' && <Cpu className="text-brand" size={28} />}
                                 {activeTab === 'expenses' && <Receipt className="text-brand" size={28} />}
                                 {activeTab === 'parts' && <Package className="text-brand" size={28} />}
+                                {activeTab === 'cms' && <ClipboardList className="text-brand" size={28} />}
 
                                 {activeTab === 'dashboard' ? t('Overview', 'ภาพรวมระบบ') :
                                     activeTab === 'branches' ? t('Branches', 'จัดการสาขา') :
                                         activeTab === 'machines' ? t('Machines', 'จัดการอุปกรณ์') :
                                             activeTab === 'expenses' ? t('Expenses', 'บันทึกค่าใช้จ่าย') :
-                                                t('Repair & Parts', 'งานซ่อมและอะไหล่')}
+                                                activeTab === 'parts' ? t('Repair & Parts', 'งานซ่อมและอะไหล่') :
+                                                    t('Corrective Maintenance', 'แจ้งซ่อม (CM)')}
                             </h2>
                         </div>
 
@@ -474,7 +498,8 @@ export default function Page() {
                                     <span className="ml-2 text-xs font-normal text-slate-500">
                                         ({activeTab === 'branches' ? filteredBranches.length :
                                             activeTab === 'machines' ? filteredMachines.length :
-                                                activeTab === 'expenses' ? filteredExpenses.length : filteredParts.length})
+                                                activeTab === 'expenses' ? filteredExpenses.length :
+                                                    activeTab === 'parts' ? filteredParts.length : filteredCms.length})
                                     </span>
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
@@ -499,7 +524,7 @@ export default function Page() {
                                     <div className="w-px h-10 bg-slate-800 mx-1 hidden sm:block"></div>
 
                                     {isAdmin && (
-                                        <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : 'part')} className="gap-2 bg-gradient-to-r from-brand to-orange-600 hover:to-orange-500 hover:shadow-orange-500/25 shadow-lg transition-all active:scale-95 text-white h-10 px-5 rounded-lg font-bold uppercase tracking-wide">
+                                        <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : activeTab === 'parts' ? 'part' : 'cm')} className="gap-2 bg-gradient-to-r from-brand to-orange-600 hover:to-orange-500 hover:shadow-orange-500/25 shadow-lg transition-all active:scale-95 text-white h-10 px-5 rounded-lg font-bold uppercase tracking-wide">
                                             <Plus size={18} /> {t('Add New', 'เพิ่มใหม่')}
                                         </Button>
                                     )}
@@ -510,6 +535,7 @@ export default function Page() {
                             {activeTab === 'machines' && <MachineListView machines={filteredMachines} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('machine', i)} onDelete={(id: string) => handleDelete('machine', id)} t={t} />}
                             {activeTab === 'expenses' && <ExpenseListView expenses={filteredExpenses} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('expense', i)} onDelete={(id: string) => handleDelete('expense', id)} t={t} />}
                             {activeTab === 'parts' && <SparePartsView parts={filteredParts} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('part', i)} onDelete={(id: string) => handleDelete('part', id)} t={t} />}
+                            {activeTab === 'cms' && <CMListView cms={filteredCms} branches={branches} machines={machines} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('cm', i)} onDelete={(id: string) => handleDelete('cm', id)} t={t} />}
                         </div>
                     )}
                 </div>
@@ -520,6 +546,7 @@ export default function Page() {
                     type={modalType}
                     item={editingItem}
                     branches={branches}
+                    machines={machines}
                     onClose={() => setIsModalOpen(false)}
                     onSave={saveItem}
                     t={t}
@@ -552,6 +579,8 @@ const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile, i
             <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Tracking</div>
             <SidebarItem icon={<Receipt size={18} />} label={t('Expenses', 'บันทึกค่าใช้จ่าย')} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} />
             <SidebarItem icon={<Package size={18} />} label={t('Spare Parts', 'อะไหล่/ซ่อม')} active={activeTab === 'parts'} onClick={() => setActiveTab('parts')} />
+            <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Service</div>
+            <SidebarItem icon={<ClipboardList size={18} />} label={t('Corrective Maint. (CM)', 'งานแก้ไข (CM)')} active={activeTab === 'cms'} onClick={() => setActiveTab('cms')} />
         </nav>
         <div className="p-4 border-t border-slate-800 space-y-3">
             <button onClick={onLoginClick} className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all", isAdmin ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white")}>
@@ -784,7 +813,7 @@ const PieLegend = ({ label, value, color }: any) => (
     </div>
 );
 
-const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
+const EntityModal = ({ type, item, branches, machines, onClose, onSave, t }: any) => {
     const [formData, setFormData] = useState<any>(item || {
         branchId: branches[0]?.id || '',
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -797,7 +826,8 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
         amount: 0,
         phase: '1',
         zone: 'BKK',
-        code: '', name: '', province: '', phone: '', detail: '', technician: '', device: '', partName: '', remark: ''
+        code: '', name: '', province: '', phone: '', detail: '', technician: '', device: '', partName: '', remark: '',
+        machineId: '', symptom: '', solution: '', technicians: ''
     });
 
     const [otherFields, setOtherFields] = useState<Record<string, boolean>>({});
@@ -984,14 +1014,74 @@ const EntityModal = ({ type, item, branches, onClose, onSave, t }: any) => {
                             <FormGroup label={t('Technician', 'ช่างที่ดำเนินการ')} value={formData.technician} onChange={(v: any) => setFormData({ ...formData, technician: v })} />
                         </>
                     )}
+
+                    {type === 'cm' && (
+                        <>
+                            <FormGroup label={t('Service Date', 'วันที่เข้าซ่อม')} type="date" value={formData.date} onChange={(v: any) => setFormData({ ...formData, date: v })} />
+                            <div>
+                                <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Select Machine', 'เลือกอุปกรณ์/เครื่อง')}</label>
+                                <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none transition-all cursor-pointer"
+                                    value={formData.machineId}
+                                    onChange={e => {
+                                        const mId = e.target.value;
+                                        const m = machines.find((x: any) => x.id === mId);
+                                        const b = branches.find((x: any) => x.id === m?.branchId);
+                                        setFormData({
+                                            ...formData,
+                                            machineId: mId,
+                                            branchId: m?.branchId || '',
+                                        });
+                                    }}>
+                                    <option value="">-- Select Machine --</option>
+                                    {machines.map((m: any) => {
+                                        const b = branches.find((x: any) => x.id === m.branchId);
+                                        return <option key={m.id} value={m.id}>{b?.code} {b?.name} - {m.name} ({m.sn})</option>
+                                    })}
+                                </select>
+                            </div>
+
+                            {/* Auto Read-Only Info */}
+                            {formData.machineId && (() => {
+                                const m = machines.find((x: any) => x.id === formData.machineId);
+                                const b = branches.find((x: any) => x.id === m?.branchId);
+                                return (
+                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-dashed border-slate-700 space-y-2">
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-slate-500">Branch:</span>
+                                            <span className="text-white font-bold">{b?.name} ({b?.code})</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-slate-500">Serial Number:</span>
+                                            <span className="text-brand font-mono">{m?.sn}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-slate-500">Contact:</span>
+                                            <span className="text-white">{b?.phone || '-'}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            <FormGroup label={t('Symptom', 'อาการเสีย')} value={formData.symptom} onChange={(v: any) => setFormData({ ...formData, symptom: v })} />
+                            <div className="col-span-2">
+                                <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{t('Solution', 'การแก้ไข')}</label>
+                                <textarea
+                                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none transition-all h-24 placeholder:text-slate-600"
+                                    value={formData.solution}
+                                    onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
+                                />
+                            </div>
+                            <FormGroup label={t('Technicians', 'ช่างผู้เข้าซ่อม (ระบุหลายคนได้)')} value={formData.technicians} onChange={(v: any) => setFormData({ ...formData, technicians: v })} />
+                        </>
+                    )}
                 </div>
 
                 <div className="p-6 bg-slate-950/80 mt-auto flex gap-4 border-t border-slate-800">
                     <Button variant="ghost" className="flex-1 rounded-xl h-12 text-slate-400 hover:text-white" onClick={onClose}>{t('Cancel', 'ยกเลิก')}</Button>
                     <Button className="flex-1 bg-brand text-white rounded-xl h-12 font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 active:scale-95 transition-all" onClick={() => onSave(formData)}>{t('Confirm & Save', 'ยืนยันบันทึกข้อมูล')}</Button>
                 </div>
-            </Card>
-        </div>
+            </Card >
+        </div >
     );
 };
 
@@ -1193,6 +1283,48 @@ const SparePartsView = ({ parts, branches, onEdit, onDelete, t, isAdmin }: any) 
                     <td className="px-6 py-4 text-slate-400 text-xs">{p.technician}</td>
                 </TableRow>
             ))}
+        </tbody>
+    </TableBase>
+);
+
+const CMListView = ({ cms, branches, machines, onEdit, onDelete, t, isAdmin }: any) => (
+    <TableBase>
+        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <tr>
+                <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
+                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                <th className="px-6 py-4">{t('Machine', 'เครื่อง/S/N')}</th>
+                <th className="px-6 py-4">{t('Symptom', 'อาการเสีย')}</th>
+                <th className="px-6 py-4">{t('Solution', 'การแก้ไข')}</th>
+                <th className="px-6 py-4">{t('Technician', 'ช่าง')}</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/50">
+            {cms.map((c: any) => {
+                const branch = branches.find((b: any) => b.id === c.branchId);
+                const machine = machines.find((m: any) => m.id === c.machineId);
+                return (
+                    <TableRow key={c.id} onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} isAdmin={isAdmin}>
+                        <td className="px-6 py-4 text-slate-400 font-medium text-xs">{c.date}</td>
+                        <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                                <span className="font-bold text-white text-sm">{branch?.name}</span>
+                                <span className="text-[10px] text-slate-500 font-mono">{branch?.phone}</span>
+                            </div>
+                        </td>
+                        <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                                <span className="font-bold text-brand text-xs">{machine?.name}</span>
+                                <span className="text-[10px] text-slate-500 font-mono">{machine.sn}</span>
+                            </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{c.symptom}</td>
+                        <td className="px-6 py-4 text-slate-400 text-xs max-w-[200px] truncate">{c.solution}</td>
+                        <td className="px-6 py-4 text-slate-400 text-xs">{c.technicians}</td>
+                    </TableRow>
+                );
+            })}
         </tbody>
     </TableBase>
 );

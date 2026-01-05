@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from "@/db";
-import { branches, machines, expenses, spareParts } from "@/db/schema";
+import { branches, machines, expenses, spareParts, cms } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -180,12 +180,53 @@ export async function deleteSparePart(id: string) {
     }
 }
 
+// --- CM Actions ---
+export async function getCms() {
+    try {
+        return await db.select().from(cms).orderBy(desc(cms.date));
+    } catch (error) {
+        console.error("Failed to get CMs:", error);
+        return [];
+    }
+}
+
+export async function upsertCm(data: any) {
+    try {
+        const { id, createdAt, updatedAt, ...rest } = data;
+        if (id && id.length > 20) {
+            await db.update(cms)
+                .set({ ...rest, updatedAt: new Date() })
+                .where(eq(cms.id, id));
+            return { success: true, id };
+        } else {
+            const result = await db.insert(cms).values(rest).returning({ id: cms.id });
+            revalidatePath("/");
+            return { success: true, id: result[0].id };
+        }
+    } catch (error) {
+        console.error("Failed to upsert CM:", error);
+        return { success: false, error };
+    }
+}
+
+export async function deleteCm(id: string) {
+    try {
+        await db.delete(cms).where(eq(cms.id, id));
+        revalidatePath("/");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete CM:", error);
+        return { success: false, error };
+    }
+}
+
 export async function clearAll(type: string) {
     try {
         if (type === 'branches') await db.delete(branches);
         if (type === 'machines') await db.delete(machines);
         if (type === 'expenses') await db.delete(expenses);
         if (type === 'parts') await db.delete(spareParts);
+        if (type === 'cms') await db.delete(cms);
         revalidatePath("/");
         return { success: true };
     } catch (error) {
@@ -195,7 +236,7 @@ export async function clearAll(type: string) {
 }
 
 // --- Bulk Actions ---
-export async function bulkInsert(type: 'branches' | 'machines' | 'expenses' | 'parts', data: any[]) {
+export async function bulkInsert(type: 'branches' | 'machines' | 'expenses' | 'parts' | 'cms', data: any[]) {
     try {
         if (data.length === 0) return { success: true };
 
@@ -223,6 +264,11 @@ export async function bulkInsert(type: 'branches' | 'machines' | 'expenses' | 'p
                     totalPrice: d.totalPrice.toString(),
                     updatedAt: new Date()
                 };
+            }));
+        } else if (type === 'cms') {
+            await db.insert(cms).values(data.map(d => {
+                const { id, ...rest } = d;
+                return { ...rest, updatedAt: new Date() };
             }));
         }
 
