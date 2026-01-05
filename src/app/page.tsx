@@ -62,6 +62,8 @@ export default function Page() {
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
     const [lang, setLang] = useState<Lang>('EN');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false); // Default to Viewer
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
 
     const [branches, setBranches] = useState<Branch[]>([]);
     const [machines, setMachines] = useState<Machine[]>([]);
@@ -327,30 +329,23 @@ export default function Page() {
     if (!isLoaded) return null;
 
     return (
-        <div className="flex min-h-screen bg-[#0F172A] text-slate-200 font-sans">
-            {/* Background Ambience */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden select-none">
-                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand/5 blur-[120px] animate-pulse-slow"></div>
-                <div className="absolute top-[20%] right-[0%] w-[40%] h-[40%] rounded-full bg-blue-600/5 blur-[120px] animate-pulse-slow delay-1000"></div>
-                <div className="absolute bottom-[0%] left-[20%] w-[30%] h-[30%] rounded-full bg-emerald-500/5 blur-[100px] animate-pulse-slow delay-2000"></div>
-            </div>
-
-            {/* Sidebar - Desktop */}
-            <aside className="fixed left-0 top-0 hidden h-full w-64 flex-col border-r border-slate-800/60 bg-[#0F172A]/90 backdrop-blur-xl lg:flex z-40 shadow-2xl">
-                <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} setLang={setLang} t={t} />
+        <div className="flex h-screen bg-slate-950 text-slate-200 font-sans selection:bg-brand/30">
+            {/* --- SIDEBAR (Desktop) --- */}
+            <aside className="hidden md:flex w-64 flex-col border-r border-slate-800 bg-slate-925/50 backdrop-blur-xl fixed inset-y-0 left-0 z-50">
+                <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} setLang={setLang} t={t} isAdmin={isAdmin} onLoginClick={() => isAdmin ? setIsAdmin(false) : setIsLoginOpen(true)} />
             </aside>
 
-            {/* Sidebar - Mobile Overlay */}
+            {/* --- SIDEBAR (Mobile Layout) --- */}
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-50 flex lg:hidden">
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
                     <aside className="relative h-full w-72 flex-col border-r border-slate-800 bg-[#0F172A] p-4 flex animate-in slide-in-from-left duration-300">
-                        <div className="flex justify-between items-center mb-8 px-2">
-                            <span className="text-xl font-bold tracking-tight text-white italic">MK TRACKER</span>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400"><X /></button>
-                        </div>
-                        <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} setLang={setLang} t={t} isMobile />
-                    </aside>
+                        <div className="w-64 h-full bg-slate-900 border-r border-slate-800 shadow-2xl relative">
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="absolute right-4 top-4 p-2 text-slate-400 hover:text-white">
+                                <X size={20} />
+                            </button>
+                            <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} lang={lang} setLang={setLang} t={t} isAdmin={isAdmin} onLoginClick={() => isAdmin ? setIsAdmin(false) : setIsLoginOpen(true)} isMobile />
+                        </div></aside>
                 </div>
             )}
 
@@ -418,10 +413,17 @@ export default function Page() {
                             <RefreshCw size={12} /> {t('Reset', 'ล้าง')}
                         </button>
                     </div>
+
+                    {!isAdmin && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <Cpu size={14} className="text-blue-500" />
+                            <span className="text-xs font-bold text-blue-400">Viewer Mode (Read Only)</span>
+                        </div>
+                    )}
                 </header>
 
                 <div className="p-4 sm:p-8 space-y-8 animate-in">
-                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} parts={filteredParts} t={t} />}
+                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} parts={filteredParts} t={t} isAdmin={isAdmin} />}
 
                     {activeTab !== 'dashboard' && (
                         <div className="space-y-4">
@@ -435,55 +437,61 @@ export default function Page() {
                                     </span>
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    <button onClick={handleClearAll} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-red-600/10 text-red-500 border border-red-600/20 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-red-500/10 hover:shadow-red-500/30 active:scale-95 mr-2" title={t('Clear All', 'ล้างข้อมูลทั้งหมด')}>
-                                        <Trash2 size={16} className="mb-0.5" /> {t('Clear', 'ล้างทั้งหมด')}
-                                    </button>
+                                    {isAdmin && (
+                                        <>
+                                            <button onClick={handleClearAll} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-red-600/10 text-red-500 border border-red-600/20 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-red-500/10 hover:shadow-red-500/30 active:scale-95 mr-2" title={t('Clear All', 'ล้างข้อมูลทั้งหมด')}>
+                                                <Trash2 size={16} className="mb-0.5" /> {t('Clear', 'ล้างทั้งหมด')}
+                                            </button>
+                                            <label className="flex items-center gap-2 px-4 h-10 rounded-lg bg-purple-600/10 text-purple-500 border border-purple-600/20 hover:bg-purple-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-purple-500/10 hover:shadow-purple-500/30 active:scale-95 cursor-pointer">
+                                                <Upload size={16} className="mb-0.5" /> {t('Import', 'นำเข้า')}
+                                                <input type="file" hidden accept=".xlsx, .xls" onChange={handleImport} />
+                                            </label>
+                                        </>
+                                    )}
                                     <button onClick={handleExport} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-emerald-600/10 text-emerald-500 border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/30 active:scale-95" title={t('Export Excel', 'ส่งออกไฟล์')}>
                                         <Download size={16} className="mb-0.5" /> {t('Export', 'ส่งออก')}
                                     </button>
                                     <button onClick={handleDownloadTemplate} className="flex items-center gap-2 px-4 h-10 rounded-lg bg-blue-600/10 text-blue-500 border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-blue-500/10 hover:shadow-blue-500/30 active:scale-95" title={t('Download Template', 'ดาวน์โหลดเทมเพลต')}>
                                         <FileSpreadsheet size={16} className="mb-0.5" /> {t('Template', 'เทมเพลต')}
                                     </button>
-                                    <label className="flex items-center gap-2 px-4 h-10 rounded-lg bg-purple-600/10 text-purple-500 border border-purple-600/20 hover:bg-purple-600 hover:text-white transition-all text-xs font-bold uppercase tracking-wider shadow-lg shadow-purple-500/10 hover:shadow-purple-500/30 active:scale-95 cursor-pointer">
-                                        <Upload size={16} className="mb-0.5" /> {t('Import', 'นำเข้า')}
-                                        <input type="file" hidden accept=".xlsx, .xls" onChange={handleImport} />
-                                    </label>
+
                                     <div className="w-px h-10 bg-slate-800 mx-1 hidden sm:block"></div>
-                                    <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : 'part')} className="gap-2 bg-gradient-to-r from-brand to-orange-600 hover:to-orange-500 hover:shadow-orange-500/25 shadow-lg transition-all active:scale-95 text-white h-10 px-5 rounded-lg font-bold uppercase tracking-wide">
-                                        <Plus size={18} /> {t('Add New', 'เพิ่มใหม่')}
-                                    </Button>
+
+                                    {isAdmin && (
+                                        <Button onClick={() => openAddModal(activeTab === 'branches' ? 'branch' : activeTab === 'machines' ? 'machine' : activeTab === 'expenses' ? 'expense' : 'part')} className="gap-2 bg-gradient-to-r from-brand to-orange-600 hover:to-orange-500 hover:shadow-orange-500/25 shadow-lg transition-all active:scale-95 text-white h-10 px-5 rounded-lg font-bold uppercase tracking-wide">
+                                            <Plus size={18} /> {t('Add New', 'เพิ่มใหม่')}
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
-                            {activeTab === 'branches' && <BranchListView branches={filteredBranches} onEdit={(i: any) => openEditModal('branch', i)} onDelete={(id: string) => handleDelete('branch', id)} t={t} />}
-                            {activeTab === 'machines' && <MachineListView machines={filteredMachines} branches={branches} onEdit={(i: any) => openEditModal('machine', i)} onDelete={(id: string) => handleDelete('machine', id)} t={t} />}
-                            {activeTab === 'expenses' && <ExpenseListView expenses={filteredExpenses} branches={branches} onEdit={(i: any) => openEditModal('expense', i)} onDelete={(id: string) => handleDelete('expense', id)} t={t} />}
-                            {activeTab === 'parts' && <SparePartsView parts={filteredParts} branches={branches} onEdit={(i: any) => openEditModal('part', i)} onDelete={(id: string) => handleDelete('part', id)} t={t} />}
+                            {activeTab === 'branches' && <BranchListView branches={filteredBranches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('branch', i)} onDelete={(id: string) => handleDelete('branch', id)} t={t} />}
+                            {activeTab === 'machines' && <MachineListView machines={filteredMachines} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('machine', i)} onDelete={(id: string) => handleDelete('machine', id)} t={t} />}
+                            {activeTab === 'expenses' && <ExpenseListView expenses={filteredExpenses} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('expense', i)} onDelete={(id: string) => handleDelete('expense', id)} t={t} />}
+                            {activeTab === 'parts' && <SparePartsView parts={filteredParts} branches={branches} isAdmin={isAdmin} onEdit={(i: any) => openEditModal('part', i)} onDelete={(id: string) => handleDelete('part', id)} t={t} />}
                         </div>
                     )}
                 </div>
             </main >
 
-            {/* --- CRUD MODAL --- */}
-            {
-                isModalOpen && (
-                    <EntityModal
-                        type={modalType}
-                        item={editingItem}
-                        branches={branches}
-                        onClose={() => setIsModalOpen(false)}
-                        onSave={saveItem}
-                        t={t}
-                    />
-                )
-            }
+            {isModalOpen && (
+                <EntityModal
+                    type={modalType}
+                    item={editingItem}
+                    branches={branches}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={saveItem}
+                    t={t}
+                />
+            )}
+            {isLoginOpen && <LoginModal onClose={() => setIsLoginOpen(false)} onLogin={() => { setIsAdmin(true); setIsLoginOpen(false); }} t={t} />}
         </div >
     );
 }
 
 // --- Sub-Components ---
 
-const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile }: any) => (
+const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile, isAdmin, onLoginClick }: any) => (
     <div className="flex flex-col h-full">
         {!isMobile && (
             <div className="flex h-16 items-center px-6 border-b border-slate-800">
@@ -504,7 +512,20 @@ const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile }:
             <SidebarItem icon={<Receipt size={18} />} label={t('Expenses', 'บันทึกค่าใช้จ่าย')} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} />
             <SidebarItem icon={<Package size={18} />} label={t('Spare Parts', 'อะไหล่/ซ่อม')} active={activeTab === 'parts'} onClick={() => setActiveTab('parts')} />
         </nav>
-        <div className="p-4 border-t border-slate-800 bg-[#0F172A]">
+        <div className="p-4 border-t border-slate-800 space-y-3">
+            <button onClick={onLoginClick} className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all", isAdmin ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white")}>
+                {isAdmin ? (
+                    <>
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        Admin Mode (Logout)
+                    </>
+                ) : (
+                    <>
+                        <div className="w-2 h-2 rounded-full bg-slate-500" />
+                        Login as Admin
+                    </>
+                )}
+            </button>
             <button
                 className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all group"
                 onClick={() => setLang(lang === 'EN' ? 'TH' : 'EN')}
@@ -986,19 +1007,21 @@ const TableBase = ({ children }: { children: React.ReactNode }) => (
     </Card>
 );
 
-const TableRow = ({ children, onEdit, onDelete }: any) => (
+const TableRow = ({ children, onEdit, onDelete, isAdmin }: any) => (
     <tr className="hover:bg-slate-800/30 transition-colors group">
         {children}
         <td className="px-6 py-4 text-right">
-            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
-                <button onClick={onEdit} className="p-2 hover:bg-brand/20 text-brand rounded-lg transition-colors"><Edit2 size={16} /></button>
-                <button onClick={onDelete} className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
-            </div>
+            {isAdmin && (
+                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
+                    <button onClick={onEdit} className="p-2 hover:bg-brand/20 text-brand rounded-lg transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={onDelete} className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                </div>
+            )}
         </td>
     </tr>
 );
 
-const BranchListView = ({ branches, onEdit, onDelete, t }: any) => (
+const BranchListView = ({ branches, onEdit, onDelete, t, isAdmin }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
@@ -1014,7 +1037,7 @@ const BranchListView = ({ branches, onEdit, onDelete, t }: any) => (
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {branches.map((b: any) => (
-                <TableRow key={b.id} onEdit={() => onEdit(b)} onDelete={() => onDelete(b.id)}>
+                <TableRow key={b.id} onEdit={() => onEdit(b)} onDelete={() => onDelete(b.id)} isAdmin={isAdmin}>
                     <td className="px-6 py-4 font-mono text-xs text-slate-400">{b.code}</td>
                     <td className="px-6 py-4 font-bold text-white">{b.name}</td>
                     <td className="px-6 py-4 text-slate-400 text-xs">{b.type}</td>
@@ -1041,7 +1064,7 @@ function calculateAge(dateString: string) {
     } catch (e) { return '-'; }
 }
 
-const MachineListView = ({ machines, branches, onEdit, onDelete, t }: any) => (
+const MachineListView = ({ machines, branches, onEdit, onDelete, t, isAdmin }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
@@ -1058,7 +1081,7 @@ const MachineListView = ({ machines, branches, onEdit, onDelete, t }: any) => (
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {machines.map((m: any) => (
-                <TableRow key={m.id} onEdit={() => onEdit(m)} onDelete={() => onDelete(m.id)}>
+                <TableRow key={m.id} onEdit={() => onEdit(m)} onDelete={() => onDelete(m.id)} isAdmin={isAdmin}>
                     <td className="px-6 py-4 text-slate-400 font-bold">{branches.find((b: any) => b.id === m.branchId)?.name}</td>
                     <td className="px-6 py-4 font-bold text-white">{m.name}</td>
                     <td className="px-6 py-4 font-mono text-slate-500 text-xs">{m.sn}</td>
@@ -1073,7 +1096,7 @@ const MachineListView = ({ machines, branches, onEdit, onDelete, t }: any) => (
     </TableBase>
 );
 
-const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t }: any) => (
+const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t, isAdmin }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
@@ -1088,7 +1111,7 @@ const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t }: any) => (
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {expenses.map((e: any) => (
-                <TableRow key={e.id} onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)}>
+                <TableRow key={e.id} onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)} isAdmin={isAdmin}>
                     <td className="px-6 py-4 font-bold text-white">{branches.find((b: any) => b.id === e.branchId)?.name}</td>
                     <td className="px-6 py-4 text-slate-400 font-medium text-xs">{e.date}</td>
                     <td className="px-6 py-4"><Badge className="bg-slate-800 text-brand border-brand/20 font-bold">{e.type}</Badge></td>
@@ -1101,7 +1124,7 @@ const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t }: any) => (
     </TableBase>
 );
 
-const SparePartsView = ({ parts, branches, onEdit, onDelete, t }: any) => (
+const SparePartsView = ({ parts, branches, onEdit, onDelete, t, isAdmin }: any) => (
     <TableBase>
         <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
@@ -1118,7 +1141,7 @@ const SparePartsView = ({ parts, branches, onEdit, onDelete, t }: any) => (
         </thead>
         <tbody className="divide-y divide-slate-800/50">
             {parts.map((p: any) => (
-                <TableRow key={p.id} onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)}>
+                <TableRow key={p.id} onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} isAdmin={isAdmin}>
                     <td className="px-6 py-4 text-slate-400 font-medium text-xs">{p.date}</td>
                     <td className="px-6 py-4 text-white font-bold text-sm">{branches.find((b: any) => b.id === p.branchId)?.name}</td>
                     <td className="px-6 py-4 text-brand font-bold text-xs">{p.device}</td>
@@ -1132,3 +1155,43 @@ const SparePartsView = ({ parts, branches, onEdit, onDelete, t }: any) => (
         </tbody>
     </TableBase>
 );
+
+const LoginModal = ({ onClose, onLogin, t }: any) => {
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Simple hardcoded password for now
+        if (password === 'admin' || password === '1234') {
+            onLogin();
+        } else {
+            setError('Invalid password');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+            <Card className="w-full max-w-sm bg-slate-900 border-slate-800 shadow-premium p-6">
+                <h3 className="text-xl font-bold text-white mb-4 text-center">Admin Login</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <Input
+                            type="password"
+                            autoFocus
+                            placeholder="Enter Password"
+                            value={password}
+                            onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                            className="text-center tracking-widest bg-slate-950 border-slate-800 focus:border-brand"
+                        />
+                        {error && <p className="text-red-500 text-xs text-center mt-2">{error}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button type="button" variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
+                        <Button type="submit" className="flex-1 bg-brand text-white">Login</Button>
+                    </div>
+                </form>
+            </Card>
+        </div>
+    );
+};
