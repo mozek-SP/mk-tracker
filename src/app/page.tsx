@@ -641,18 +641,26 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                         Top 5 Total Expenses
                     </h3>
                     <div className="space-y-3">
-                        {expenses
-                            .sort((a: any, b: any) => b.amount - a.amount)
+                        {/* Calculate Total Expenses per Branch */}
+                        {Object.values(expenses.reduce((acc: any, curr: any) => {
+                            const bId = curr.branchId;
+                            if (!acc[bId]) acc[bId] = { branchId: bId, total: 0 };
+                            acc[bId].total += curr.amount;
+                            return acc;
+                        }, {}))
+                            .sort((a: any, b: any) => b.total - a.total)
                             .slice(0, 5)
-                            .map((e: any, i: number) => (
-                                <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-semibold text-slate-200">{e.detail || e.type || '-'}</span>
-                                        <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === e.branchId)?.name || 'Unknown Branch'}</span>
+                            .map((item: any, i: number) => {
+                                const branch = branches.find((b: any) => b.id === item.branchId);
+                                return (
+                                    <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-slate-200">{branch?.code || 'N/A'} {branch?.name}</span>
+                                        </div>
+                                        <span className="text-brand font-bold">฿{item.total.toLocaleString()}</span>
                                     </div>
-                                    <span className="text-brand font-bold">฿{e.amount.toLocaleString()}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         {expenses.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
                     </div>
                 </Card>
@@ -664,29 +672,34 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                         Top 5 Repair Costs
                     </h3>
                     <div className="space-y-3">
-                        {[...expenses, ...parts]
+
+                        {/* Calculate Total Repair Costs per Branch */}
+                        {Object.values([...expenses, ...parts]
                             .filter((item: any) => {
-                                // Check if it's a repair expense or a spare part (all parts are repair costs)
                                 const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
-                                const isPart = item.totalPrice !== undefined; // It's a spare part
+                                const isPart = item.totalPrice !== undefined;
                                 return isRepairExp || isPart;
                             })
-                            .map((item: any) => ({
-                                ...item,
-                                cost: item.amount !== undefined ? item.amount : item.totalPrice, // Normalize cost field
-                                label: item.detail || item.partName || item.type // Normalize label
-                            }))
-                            .sort((a: any, b: any) => b.cost - a.cost)
+                            .reduce((acc: any, curr: any) => {
+                                const bId = curr.branchId;
+                                const cost = curr.amount !== undefined ? curr.amount : curr.totalPrice;
+                                if (!acc[bId]) acc[bId] = { branchId: bId, total: 0 };
+                                acc[bId].total += cost;
+                                return acc;
+                            }, {}))
+                            .sort((a: any, b: any) => b.total - a.total)
                             .slice(0, 5)
-                            .map((item: any, i: number) => (
-                                <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-semibold text-slate-200">{item.label || '-'}</span>
-                                        <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === item.branchId)?.name || 'Unknown Branch'}</span>
+                            .map((item: any, i: number) => {
+                                const branch = branches.find((b: any) => b.id === item.branchId);
+                                return (
+                                    <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-slate-200">{branch?.code || 'N/A'} {branch?.name}</span>
+                                        </div>
+                                        <span className="text-blue-500 font-bold">฿{item.total.toLocaleString()}</span>
                                     </div>
-                                    <span className="text-blue-500 font-bold">฿{item.cost.toLocaleString()}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         {([...expenses, ...parts].filter((item: any) => {
                             const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
                             const isPart = item.totalPrice !== undefined;
@@ -695,7 +708,7 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                     </div>
                 </Card>
             </div>
-        </div >
+        </div>
     );
 };
 
