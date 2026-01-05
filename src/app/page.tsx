@@ -247,7 +247,36 @@ export default function Page() {
             expenses: filteredExpenses,
             parts: filteredParts
         };
-        const exportData = activeTab === 'dashboard' ? expenses : dataMap[activeTab];
+        const rawData = activeTab === 'dashboard' ? expenses : dataMap[activeTab];
+
+        const exportData = rawData.map((item: any) => {
+            // Destructure to remove system fields
+            const { createdAt, updatedAt, id, branchId, ...rest } = item;
+
+            let newItem = { ...rest };
+
+            // Resolve Branch Info
+            if (branchId) {
+                // For Machines, Expenses, Parts (which have branchId)
+                const branch = branches.find(b => b.id === branchId);
+                newItem = {
+                    'Code': branch?.code || '',
+                    'Branch Name': branch?.name || '',
+                    ...newItem
+                };
+            } else if (rest.code !== undefined && rest.name !== undefined) {
+                // For Branches (which have code and name directly)
+                const { code, name, ...others } = rest;
+                newItem = {
+                    'Code': code,
+                    'Name': name,
+                    ...others
+                };
+            }
+
+            return newItem;
+        });
+
         exportToExcel(exportData, `MK_${activeTab.toUpperCase()}`);
     };
 
