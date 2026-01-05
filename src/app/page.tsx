@@ -631,72 +631,71 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                     </div>
                 </Card>
             </div>
-        </div>
 
-            {/* --- Top 5 Summary Section --- */ }
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top 5 Total Expenses */}
-        <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
-            <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-brand" />
-                Top 5 Total Expenses
-            </h3>
-            <div className="space-y-3">
-                {expenses
-                    .sort((a: any, b: any) => b.amount - a.amount)
-                    .slice(0, 5)
-                    .map((e: any, i: number) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">{e.detail || e.type || '-'}</span>
-                                <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === e.branchId)?.name || 'Unknown Branch'}</span>
-                            </div>
-                            <span className="text-brand font-bold">฿{e.amount.toLocaleString()}</span>
-                        </div>
-                    ))}
-                {expenses.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
-            </div>
-        </Card>
+            {/* --- Top 5 Summary Section --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Top 5 Total Expenses */}
+                <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
+                    <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-brand" />
+                        Top 5 Total Expenses
+                    </h3>
+                    <div className="space-y-3">
+                        {expenses
+                            .sort((a: any, b: any) => b.amount - a.amount)
+                            .slice(0, 5)
+                            .map((e: any, i: number) => (
+                                <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-semibold text-slate-200">{e.detail || e.type || '-'}</span>
+                                        <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === e.branchId)?.name || 'Unknown Branch'}</span>
+                                    </div>
+                                    <span className="text-brand font-bold">฿{e.amount.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        {expenses.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
+                    </div>
+                </Card>
 
-        {/* Top 5 Repair Costs */}
-        <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
-            <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-                <Wrench className="w-5 h-5 text-blue-500" />
-                Top 5 Repair Costs
-            </h3>
-            <div className="space-y-3">
-                {[...expenses, ...parts]
-                    .filter((item: any) => {
-                        // Check if it's a repair expense or a spare part (all parts are repair costs)
-                        const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
-                        const isPart = item.totalPrice !== undefined; // It's a spare part
-                        return isRepairExp || isPart;
-                    })
-                    .map((item: any) => ({
-                        ...item,
-                        cost: item.amount !== undefined ? item.amount : item.totalPrice, // Normalize cost field
-                        label: item.detail || item.partName || item.type // Normalize label
-                    }))
-                    .sort((a: any, b: any) => b.cost - a.cost)
-                    .slice(0, 5)
-                    .map((item: any, i: number) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-slate-200">{item.label || '-'}</span>
-                                <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === item.branchId)?.name || 'Unknown Branch'}</span>
-                            </div>
-                            <span className="text-blue-500 font-bold">฿{item.cost.toLocaleString()}</span>
-                        </div>
-                    ))}
-                {([...expenses, ...parts].filter((item: any) => {
-                    const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
-                    const isPart = item.totalPrice !== undefined;
-                    return isRepairExp || isPart;
-                }).length === 0) && <div className="text-center text-slate-500 py-4">No data available</div>}
+                {/* Top 5 Repair Costs */}
+                <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
+                    <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <Wrench className="w-5 h-5 text-blue-500" />
+                        Top 5 Repair Costs
+                    </h3>
+                    <div className="space-y-3">
+                        {[...expenses, ...parts]
+                            .filter((item: any) => {
+                                // Check if it's a repair expense or a spare part (all parts are repair costs)
+                                const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
+                                const isPart = item.totalPrice !== undefined; // It's a spare part
+                                return isRepairExp || isPart;
+                            })
+                            .map((item: any) => ({
+                                ...item,
+                                cost: item.amount !== undefined ? item.amount : item.totalPrice, // Normalize cost field
+                                label: item.detail || item.partName || item.type // Normalize label
+                            }))
+                            .sort((a: any, b: any) => b.cost - a.cost)
+                            .slice(0, 5)
+                            .map((item: any, i: number) => (
+                                <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-semibold text-slate-200">{item.label || '-'}</span>
+                                        <span className="text-xs text-slate-500">{branches.find((b: any) => b.id === item.branchId)?.name || 'Unknown Branch'}</span>
+                                    </div>
+                                    <span className="text-blue-500 font-bold">฿{item.cost.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        {([...expenses, ...parts].filter((item: any) => {
+                            const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
+                            const isPart = item.totalPrice !== undefined;
+                            return isRepairExp || isPart;
+                        }).length === 0) && <div className="text-center text-slate-500 py-4">No data available</div>}
+                    </div>
+                </Card>
             </div>
-        </Card>
-    </div>
-    </div >
+        </div >
     );
 };
 
