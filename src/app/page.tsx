@@ -421,7 +421,7 @@ export default function Page() {
                 </header>
 
                 <div className="p-4 sm:p-8 space-y-8 animate-in">
-                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} t={t} />}
+                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} parts={filteredParts} t={t} />}
 
                     {activeTab !== 'dashboard' && (
                         <div className="space-y-4">
@@ -519,23 +519,44 @@ const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile }:
     </div>
 );
 
-const DashboardView = ({ branches, machines, expenses, t }: any) => {
-    const totalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
-    const repairCosts = expenses.filter((e: any) =>
-        e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าอะไหล่' || e.type === 'Spare Parts'
+const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
+    // Calculate totals from Expenses table
+    const expenseTotal = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+
+    // Calculate totals from Spare Parts table
+    const partsTotal = parts.reduce((sum: number, p: any) => sum + p.totalPrice, 0);
+
+    // Total Expenses = Expenses + Parts
+    const totalExpenses = expenseTotal + partsTotal;
+
+    // Repair Costs = (Repair/Maintenance in Expenses) + All Parts
+    const repairExpenses = expenses.filter((e: any) =>
+        e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าบำรุงรักษา' || e.type === 'Maintenance'
     ).reduce((sum: number, e: any) => sum + e.amount, 0);
 
+    const repairCosts = repairExpenses + partsTotal;
+
     const chartData = useMemo(() => {
-        if (!expenses.length) return [];
         const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-        return months.map(m => ({
-            name: m,
-            amount: expenses.filter((e: any) => {
+        return months.map(m => {
+            // Sum from Expenses
+            const expSum = expenses.filter((e: any) => {
                 const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
                 return format(d, 'MM') === m;
-            }).reduce((s: number, e: any) => s + e.amount, 0)
-        }));
-    }, [expenses]);
+            }).reduce((s: number, e: any) => s + e.amount, 0);
+
+            // Sum from Parts
+            const partSum = parts.filter((p: any) => {
+                const d = typeof p.date === 'string' ? parseISO(p.date) : new Date(p.date);
+                return format(d, 'MM') === m;
+            }).reduce((s: number, p: any) => s + p.totalPrice, 0);
+
+            return {
+                name: m,
+                amount: expSum + partSum
+            };
+        });
+    }, [expenses, parts]);
 
     return (
         <div className="space-y-8 animate-in">
