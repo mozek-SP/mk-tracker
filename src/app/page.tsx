@@ -34,7 +34,8 @@ import {
     Pie,
     Cell,
     AreaChart,
-    Area
+    Area,
+    Legend
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
@@ -488,7 +489,7 @@ export default function Page() {
                 </header>
 
                 <div className="p-4 sm:p-8 space-y-8 animate-in">
-                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} parts={filteredParts} t={t} isAdmin={isAdmin} />}
+                    {activeTab === 'dashboard' && <DashboardView branches={branches} machines={machines} expenses={filteredExpenses} parts={filteredParts} cms={cms} t={t} isAdmin={isAdmin} />}
 
                     {activeTab !== 'dashboard' && (
                         <div className="space-y-4">
@@ -539,7 +540,7 @@ export default function Page() {
                         </div>
                     )}
                 </div>
-            </main >
+            </main>
 
             {isModalOpen && (
                 <EntityModal
@@ -553,72 +554,74 @@ export default function Page() {
                 />
             )}
             {isLoginOpen && <LoginModal onClose={() => setIsLoginOpen(false)} onLogin={() => { setIsAdmin(true); setIsLoginOpen(false); }} t={t} />}
-        </div >
+        </div>
     );
 }
 
 // --- Sub-Components ---
 
-const SidebarContent = ({ activeTab, setActiveTab, lang, setLang, t, isMobile, isAdmin, onLoginClick }: any) => (
-    <div className="flex flex-col h-full">
-        {!isMobile && (
-            <div className="flex h-16 items-center px-6 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/20">
-                        <TrendingUp className="text-white" size={20} />
+function SidebarContent({ activeTab, setActiveTab, lang, setLang, t, isMobile, isAdmin, onLoginClick }: any) {
+    return (
+        <div className="flex flex-col h-full">
+            {!isMobile && (
+                <div className="flex h-16 items-center px-6 border-b border-slate-800">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/20">
+                            <TrendingUp className="text-white" size={20} />
+                        </div>
+                        <span className="text-xl font-black tracking-tight text-white italic">MK TRACKER</span>
                     </div>
-                    <span className="text-xl font-black tracking-tight text-white italic">MK TRACKER</span>
                 </div>
+            )}
+            <nav className="flex-1 space-y-1 p-4 overflow-y-auto custom-scrollbar">
+                <SidebarItem icon={<LayoutDashboard size={18} />} label={t('Dashboard', 'แผงควบคุม')} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+                <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Management</div>
+                <SidebarItem icon={<Store size={18} />} label={t('Branches', 'จัดการสาขา')} active={activeTab === 'branches'} onClick={() => setActiveTab('branches')} />
+                <SidebarItem icon={<Cpu size={18} />} label={t('Machines', 'รายชื่ออุปกรณ์')} active={activeTab === 'machines'} onClick={() => setActiveTab('machines')} />
+                <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Tracking</div>
+                <SidebarItem icon={<Receipt size={18} />} label={t('Expenses', 'บันทึกค่าใช้จ่าย')} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} />
+                <SidebarItem icon={<Package size={18} />} label={t('Spare Parts', 'อะไหล่/ซ่อม')} active={activeTab === 'parts'} onClick={() => setActiveTab('parts')} />
+                <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Service</div>
+                <SidebarItem icon={<ClipboardList size={18} />} label={t('Corrective Maint. (CM)', 'งานแก้ไข (CM)')} active={activeTab === 'cms'} onClick={() => setActiveTab('cms')} />
+            </nav>
+            <div className="p-4 border-t border-slate-800 space-y-3">
+                <button onClick={onLoginClick} className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all", isAdmin ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white")}>
+                    {isAdmin ? (
+                        <>
+                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            Admin Mode (Logout)
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-2 h-2 rounded-full bg-slate-500" />
+                            Login as Admin
+                        </>
+                    )}
+                </button>
+                <button
+                    className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all group"
+                    onClick={() => setLang(lang === 'EN' ? 'TH' : 'EN')}
+                >
+                    <div className="flex items-center gap-3">
+                        <Globe size={16} className="text-brand group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-bold">{lang === 'EN' ? 'English' : 'ภาษาไทย'}</span>
+                    </div>
+                    <Badge className="bg-slate-800 text-slate-500 group-hover:bg-brand group-hover:text-white transition-colors">{lang}</Badge>
+                </button>
             </div>
-        )}
-        <nav className="flex-1 space-y-1 p-4 overflow-y-auto custom-scrollbar">
-            <SidebarItem icon={<LayoutDashboard size={18} />} label={t('Dashboard', 'แผงควบคุม')} active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-            <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Management</div>
-            <SidebarItem icon={<Store size={18} />} label={t('Branches', 'จัดการสาขา')} active={activeTab === 'branches'} onClick={() => setActiveTab('branches')} />
-            <SidebarItem icon={<Cpu size={18} />} label={t('Machines', 'รายชื่ออุปกรณ์')} active={activeTab === 'machines'} onClick={() => setActiveTab('machines')} />
-            <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Tracking</div>
-            <SidebarItem icon={<Receipt size={18} />} label={t('Expenses', 'บันทึกค่าใช้จ่าย')} active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} />
-            <SidebarItem icon={<Package size={18} />} label={t('Spare Parts', 'อะไหล่/ซ่อม')} active={activeTab === 'parts'} onClick={() => setActiveTab('parts')} />
-            <div className="my-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Service</div>
-            <SidebarItem icon={<ClipboardList size={18} />} label={t('Corrective Maint. (CM)', 'งานแก้ไข (CM)')} active={activeTab === 'cms'} onClick={() => setActiveTab('cms')} />
-        </nav>
-        <div className="p-4 border-t border-slate-800 space-y-3">
-            <button onClick={onLoginClick} className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all", isAdmin ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white")}>
-                {isAdmin ? (
-                    <>
-                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        Admin Mode (Logout)
-                    </>
-                ) : (
-                    <>
-                        <div className="w-2 h-2 rounded-full bg-slate-500" />
-                        Login as Admin
-                    </>
-                )}
-            </button>
-            <button
-                className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all group"
-                onClick={() => setLang(lang === 'EN' ? 'TH' : 'EN')}
-            >
-                <div className="flex items-center gap-3">
-                    <Globe size={16} className="text-brand group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">{lang === 'EN' ? 'English' : 'ภาษาไทย'}</span>
-                </div>
-                <Badge className="bg-slate-800 text-slate-500 group-hover:bg-brand group-hover:text-white transition-colors">{lang}</Badge>
-            </button>
         </div>
-    </div>
-);
+    );
+}
 
-const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
+function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }: any) {
     // Calculate totals from Expenses table
     const expenseTotal = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
     // Calculate totals from Spare Parts table
     const partsTotal = parts.reduce((sum: number, p: any) => sum + p.totalPrice, 0);
 
-    // Total Expenses = Expenses Only (Separated as requested)
-    const totalExpenses = expenseTotal;
+    // Total Expenses = Expenses Only + All Parts
+    const totalExpenses = expenseTotal + partsTotal;
 
     // Repair Costs = (Repair/Maintenance in Expenses) + All Parts
     const repairExpenses = expenses.filter((e: any) =>
@@ -636,10 +639,22 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                 return format(d, 'MM') === m;
             }).reduce((s: number, e: any) => s + e.amount, 0);
 
-            // Chart follows Total Expenses definition (Expenses Only)
+            // Sum Repair Costs for chart (Maintenance/Repair expenses + Spare Parts)
+            const repairExpSum = expenses.filter((e: any) => {
+                const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
+                const isRepairType = e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าบำรุงรักษา' || e.type === 'Maintenance';
+                return format(d, 'MM') === m && isRepairType;
+            }).reduce((s: number, e: any) => s + e.amount, 0);
+
+            const partsSum = parts.filter((p: any) => {
+                const d = typeof p.date === 'string' ? parseISO(p.date) : new Date(p.date);
+                return format(d, 'MM') === m;
+            }).reduce((s: number, p: any) => s + p.totalPrice, 0);
+
             return {
                 name: m,
-                amount: expSum
+                amount: expSum + partsSum,
+                repairAmount: repairExpSum + partsSum
             };
         });
     }, [expenses, parts]);
@@ -670,15 +685,22 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                                         <stop offset="5%" stopColor="#F97316" stopOpacity={0.3} />
                                         <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
                                     </linearGradient>
+                                    <linearGradient id="colorRepair" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                    </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                 <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                                 <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} tickFormatter={(v) => `฿${v >= 1000 ? (v / 1000) + 'k' : v}`} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
-                                    formatter={(v: any) => [`฿${v.toLocaleString()}`, 'Amount']}
+                                    itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                    formatter={(v: any) => `฿${v.toLocaleString()}`}
                                 />
-                                <Area type="monotone" dataKey="amount" stroke="#F97316" fill="url(#colorExp)" strokeWidth={3} animationDuration={1000} />
+                                <Legend verticalAlign="top" height={36} iconType="circle" />
+                                <Area name={t('Total Expenses', 'ค่าใช้จ่ายรวม')} type="monotone" dataKey="amount" stroke="#F97316" fill="url(#colorExp)" strokeWidth={3} animationDuration={1000} />
+                                <Area name={t('Repair Costs', 'ค่าซ่อมบำรุง')} type="monotone" dataKey="repairAmount" stroke="#3B82F6" fill="url(#colorRepair)" strokeWidth={3} animationDuration={1000} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -723,8 +745,8 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                 </Card>
             </div>
 
-            {/* --- Top 5 Summary Section --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* --- Summary Sections --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* Top 5 Total Expenses */}
                 <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
                     <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
@@ -732,11 +754,12 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                         Top 5 Total Expenses
                     </h3>
                     <div className="space-y-3">
-                        {/* Calculate Total Expenses per Branch */}
-                        {Object.values(expenses.reduce((acc: any, curr: any) => {
+                        {/* Calculate Total Expenses per Branch (Expenses + Parts) */}
+                        {Object.values([...expenses, ...parts].reduce((acc: any, curr: any) => {
                             const bId = curr.branchId;
+                            const amount = curr.amount !== undefined ? curr.amount : curr.totalPrice;
                             if (!acc[bId]) acc[bId] = { branchId: bId, total: 0 };
-                            acc[bId].total += curr.amount;
+                            acc[bId].total += amount;
                             return acc;
                         }, {}))
                             .sort((a: any, b: any) => b.total - a.total)
@@ -798,22 +821,57 @@ const DashboardView = ({ branches, machines, expenses, parts, t }: any) => {
                         }).length === 0) && <div className="text-center text-slate-500 py-4">No data available</div>}
                     </div>
                 </Card>
+                {/* Corrective Maintenance (CM) Records Summary */}
+                <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
+                    <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <ClipboardList className="w-5 h-5 text-purple-500" />
+                        {t('CM Records Summary', 'สรุปการเข้า CM')}
+                    </h3>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                        {/* Calculate CM counts per branch */}
+                        {Object.values(cms.reduce((acc: any, curr: any) => {
+                            const bId = curr.branchId;
+                            if (!acc[bId]) acc[bId] = { branchId: bId, count: 0 };
+                            acc[bId].count += 1;
+                            return acc;
+                        }, {}))
+                            .sort((a: any, b: any) => b.count - a.count)
+                            .map((item: any, i: number) => {
+                                const branch = branches.find((b: any) => b.id === item.branchId);
+                                return (
+                                    <div key={i} className="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg border border-slate-800/50 hover:border-brand/30 transition-colors">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-slate-200">{branch?.code || 'N/A'} {branch?.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-500 font-bold">{item.count}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase">{t('Times', 'ครั้ง')}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        {cms.length === 0 && <div className="text-center text-slate-500 py-4">No CM records available</div>}
+                    </div>
+                </Card>
+                {/* Removed the extra empty grid row */}
             </div>
         </div>
     );
 };
 
-const PieLegend = ({ label, value, color }: any) => (
-    <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-3">
-            <div className={cn("w-3 h-3 rounded-full shadow-lg", color)} />
-            <span className="text-slate-400 text-sm font-semibold">{label}</span>
+function PieLegend({ label, value, color }: any) {
+    return (
+        <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-3">
+                <div className={cn("w-3 h-3 rounded-full shadow-lg", color)} />
+                <span className="text-slate-400 text-sm font-semibold">{label}</span>
+            </div>
+            <span className="text-white font-bold">{value}</span>
         </div>
-        <span className="text-white font-bold">{value}</span>
-    </div>
-);
+    );
+}
 
-const EntityModal = ({ type, item, branches, machines, onClose, onSave, t }: any) => {
+function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any) {
     const [formData, setFormData] = useState<any>(item || {
         branchId: branches[0]?.id || '',
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -1085,20 +1143,22 @@ const EntityModal = ({ type, item, branches, machines, onClose, onSave, t }: any
                     <Button variant="ghost" className="flex-1 rounded-xl h-12 text-slate-400 hover:text-white" onClick={onClose}>{t('Cancel', 'ยกเลิก')}</Button>
                     <Button className="flex-1 bg-brand text-white rounded-xl h-12 font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 active:scale-95 transition-all" onClick={() => onSave(formData)}>{t('Confirm & Save', 'ยืนยันบันทึกข้อมูล')}</Button>
                 </div>
-            </Card >
-        </div >
+            </Card>
+        </div>
     );
 };
 
-const SidebarItem = ({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: any }) => (
-    <button onClick={onClick} className={cn("flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold transition-all group",
-        active ? "bg-brand text-white shadow-premium shadow-brand/20" : "text-slate-400 hover:bg-slate-800/50 hover:text-white")}>
-        <span className={cn(active ? "text-white" : "text-slate-500 group-hover:text-brand transition-colors")}>{icon}</span> {label}
-        {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
-    </button>
-);
+function SidebarItem({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: any }) {
+    return (
+        <button onClick={onClick} className={cn("flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold transition-all group",
+            active ? "bg-brand text-white shadow-premium shadow-brand/20" : "text-slate-400 hover:bg-slate-800/50 hover:text-white")}>
+            <span className={cn(active ? "text-white" : "text-slate-500 group-hover:text-brand transition-colors")}>{icon}</span> {label}
+            {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
+        </button>
+    );
+}
 
-const StatsCard = ({ title, value, icon, accent }: any) => {
+function StatsCard({ title, value, icon, accent }: any) {
     const accents: any = {
         brand: "group-hover:bg-brand/10 border-brand/10",
         blue: "group-hover:bg-blue-500/10 border-blue-500/10",
@@ -1115,49 +1175,57 @@ const StatsCard = ({ title, value, icon, accent }: any) => {
             <div className="text-2xl font-black text-white">{value}</div>
         </Card>
     );
-};
+}
 
-const FilterSelect = ({ value, onChange, options, label }: any) => (
-    <div className="flex flex-col gap-1 inline-flex shrink-0">
-        <span className="text-[10px] font-black text-slate-500 uppercase px-1 tracking-tighter opacity-80">{label}</span>
-        <select className="h-9 min-w-[100px] rounded-xl border border-slate-700/50 bg-slate-800/80 px-3 text-[11px] font-bold text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand/50 transition-all cursor-pointer hover:bg-slate-800" value={value} onChange={(e) => onChange(e.target.value)}>
-            {options.map((o: any) => <option key={o.v || o} value={o.v || o} className="bg-slate-900">{o.l || o}</option>)}
-        </select>
-    </div>
-);
-
-const FormGroup = ({ label, value, onChange, type = "text" }: any) => (
-    <div>
-        <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{label}</label>
-        <Input type={type} value={value} onChange={e => onChange(e.target.value)} className="bg-slate-800/50 border-slate-700/50 rounded-xl focus:border-brand focus:ring-brand/20 transition-all h-11 placeholder:text-slate-600" />
-    </div>
-);
-
-const TableBase = ({ children }: { children: React.ReactNode }) => (
-    <Card className="p-0 border-slate-800/60 bg-slate-900/40 overflow-hidden shadow-premium backdrop-blur-sm ring-1 ring-white/5">
-        <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-                {children}
-            </table>
+function FilterSelect({ value, onChange, options, label }: any) {
+    return (
+        <div className="flex flex-col gap-1 inline-flex shrink-0">
+            <span className="text-[10px] font-black text-slate-500 uppercase px-1 tracking-tighter opacity-80">{label}</span>
+            <select className="h-9 min-w-[100px] rounded-xl border border-slate-700/50 bg-slate-800/80 px-3 text-[11px] font-bold text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand/50 transition-all cursor-pointer hover:bg-slate-800" value={value} onChange={(e) => onChange(e.target.value)}>
+                {options.map((o: any) => <option key={o.v || o} value={o.v || o} className="bg-slate-900">{o.l || o}</option>)}
+            </select>
         </div>
-    </Card>
-);
+    );
+}
 
-const TableRow = ({ children, onEdit, onDelete, isAdmin }: any) => (
-    <tr className="hover:bg-slate-800/30 transition-colors group">
-        {children}
-        <td className="px-6 py-4 text-right">
-            {isAdmin && (
-                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
-                    <button onClick={onEdit} className="p-2 hover:bg-brand/20 text-brand rounded-lg transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={onDelete} className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
-                </div>
-            )}
-        </td>
-    </tr>
-);
+function FormGroup({ label, value, onChange, type = "text" }: any) {
+    return (
+        <div>
+            <label className="text-[10px] text-slate-500 uppercase font-black mb-1.5 block tracking-widest">{label}</label>
+            <Input type={type} value={value} onChange={(e: any) => onChange(e.target.value)} className="bg-slate-800/50 border-slate-700/50 rounded-xl focus:border-brand focus:ring-brand/20 transition-all h-11 placeholder:text-slate-600" />
+        </div>
+    );
+}
 
-const BranchListView = ({ branches, machines, onEdit, onDelete, t, isAdmin }: any) => {
+function TableBase({ children }: { children: React.ReactNode }) {
+    return (
+        <Card className="p-0 border-slate-800/60 bg-slate-900/40 overflow-hidden shadow-premium backdrop-blur-sm ring-1 ring-white/5">
+            <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                    {children}
+                </table>
+            </div>
+        </Card>
+    );
+}
+
+function TableRow({ children, onEdit, onDelete, isAdmin }: any) {
+    return (
+        <tr className="hover:bg-slate-800/30 transition-colors group">
+            {children}
+            <td className="px-6 py-4 text-right">
+                {isAdmin && (
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
+                        <button onClick={onEdit} className="p-2 hover:bg-brand/20 text-brand rounded-lg transition-colors"><Edit2 size={16} /></button>
+                        <button onClick={onDelete} className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                    </div>
+                )}
+            </td>
+        </tr>
+    );
+}
+
+function BranchListView({ branches, machines, onEdit, onDelete, t, isAdmin }: any) {
     return (
         <TableBase>
             <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -1206,14 +1274,13 @@ const BranchListView = ({ branches, machines, onEdit, onDelete, t, isAdmin }: an
                             <td className="px-6 py-4 text-center text-[10px] text-slate-500">
                                 {b.warrantyStart ? `${b.warrantyStart} - ${b.warrantyEnd}` : '-'}
                             </td>
-                            {/* <td className="px-6 py-4 text-slate-400 text-xs">{b.phone}</td> */}
                         </TableRow>
                     );
                 })}
             </tbody>
         </TableBase>
     );
-};
+}
 
 function calculateAge(dateString: string) {
     if (!dateString) return '-';
@@ -1228,141 +1295,149 @@ function calculateAge(dateString: string) {
     } catch (e) { return '-'; }
 }
 
-const MachineListView = ({ machines, branches, onEdit, onDelete, t, isAdmin }: any) => (
-    <TableBase>
-        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr>
-                <th className="px-6 py-4">Branch</th>
-                <th className="px-6 py-4">Asset</th>
-                <th className="px-6 py-4">S/N</th>
-                <th className="px-6 py-4 text-center">Install</th>
-                <th className="px-6 py-4 text-center">Age</th>
-                <th className="px-6 py-4 text-center">POS</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4">Remark</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-            {machines.map((m: any) => (
-                <TableRow key={m.id} onEdit={() => onEdit(m)} onDelete={() => onDelete(m.id)} isAdmin={isAdmin}>
-                    <td className="px-6 py-4 text-slate-400 font-bold">{branches.find((b: any) => b.id === m.branchId)?.name}</td>
-                    <td className="px-6 py-4 font-bold text-white">{m.name}</td>
-                    <td className="px-6 py-4 font-mono text-slate-500 text-xs">{m.sn}</td>
-                    <td className="px-6 py-4 text-center text-xs text-slate-500">{m.installDate}</td>
-                    <td className="px-6 py-4 text-center text-xs font-mono text-brand">{calculateAge(m.installDate)}</td>
-                    <td className="px-6 py-4 text-center text-xs text-slate-400">{m.pos}</td>
-                    <td className="px-6 py-4 text-center"><Badge variant={m.status === 'พร้อมใช้งาน' ? 'success' : m.status === 'รอซ่อม' ? 'error' : 'default'} className="font-bold tracking-tighter uppercase whitespace-nowrap text-[10px]">{m.status}</Badge></td>
-                    <td className="px-6 py-4 text-xs text-slate-500 italic max-w-[150px] truncate">{m.remark}</td>
-                </TableRow>
-            ))}
-        </tbody>
-    </TableBase>
-);
-
-const ExpenseListView = ({ expenses, branches, onEdit, onDelete, t, isAdmin }: any) => (
-    <TableBase>
-        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr>
-                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
-                <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
-                <th className="px-6 py-4">{t('Type', 'ประเภทค่าใช้จ่าย')}</th>
-                <th className="px-6 py-4">{t('Detail', 'รายละเอียด')}</th>
-                <th className="px-6 py-4">{t('Technician', 'ช่างที่เข้าหน้างาน')}</th>
-                <th className="px-6 py-4 text-right">{t('Amount', 'จำนวนเงิน(บาท)')}</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-            {expenses.map((e: any) => (
-                <TableRow key={e.id} onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)} isAdmin={isAdmin}>
-                    <td className="px-6 py-4 font-bold text-white">{branches.find((b: any) => b.id === e.branchId)?.name}</td>
-                    <td className="px-6 py-4 text-slate-400 font-medium text-xs">{e.date}</td>
-                    <td className="px-6 py-4"><Badge className="bg-slate-800 text-brand border-brand/20 font-bold">{e.type}</Badge></td>
-                    <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{e.detail}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">{e.technician}</td>
-                    <td className="px-6 py-4 text-right font-black text-brand tabular-nums">฿{e.amount.toLocaleString()}</td>
-                </TableRow>
-            ))}
-        </tbody>
-    </TableBase>
-);
-
-const SparePartsView = ({ parts, branches, onEdit, onDelete, t, isAdmin }: any) => (
-    <TableBase>
-        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr>
-                <th className="px-6 py-4">{t('Date', 'วันที่ซ่อม')}</th>
-                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
-                <th className="px-6 py-4">{t('Device', 'อุปกรณ์ที่ซ่อม')}</th>
-                <th className="px-6 py-4">{t('Part', 'ชื่ออะไหล่')}</th>
-                <th className="px-6 py-4 text-center">{t('Qty', 'จำนวน')}</th>
-                <th className="px-6 py-4 text-right">{t('Price/Unit', 'ราคา/หน่วย')}</th>
-                <th className="px-6 py-4 text-right">{t('Total', 'ราคารวม')}</th>
-                <th className="px-6 py-4">{t('Technician', 'ช่างที่ดำเนินการ')}</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-            {parts.map((p: any) => (
-                <TableRow key={p.id} onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} isAdmin={isAdmin}>
-                    <td className="px-6 py-4 text-slate-400 font-medium text-xs">{p.date}</td>
-                    <td className="px-6 py-4 text-white font-bold text-sm">{branches.find((b: any) => b.id === p.branchId)?.name}</td>
-                    <td className="px-6 py-4 text-brand font-bold text-xs">{p.device}</td>
-                    <td className="px-6 py-4 text-slate-300 font-semibold">{p.partName}</td>
-                    <td className="px-6 py-4 text-center text-slate-400">{p.qty}</td>
-                    <td className="px-6 py-4 text-right text-slate-400 tabular-nums">฿{p.unitPrice.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right font-black text-emerald-500 tabular-nums">฿{p.totalPrice.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">{p.technician}</td>
-                </TableRow>
-            ))}
-        </tbody>
-    </TableBase>
-);
-
-const CMListView = ({ cms, branches, machines, onEdit, onDelete, t, isAdmin }: any) => (
-    <TableBase>
-        <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            <tr>
-                <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
-                <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
-                <th className="px-6 py-4">{t('Machine', 'เครื่อง/S/N')}</th>
-                <th className="px-6 py-4">{t('Symptom', 'อาการเสีย')}</th>
-                <th className="px-6 py-4">{t('Solution', 'การแก้ไข')}</th>
-                <th className="px-6 py-4">{t('Technician', 'ช่าง')}</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-            {cms.map((c: any) => {
-                const branch = branches.find((b: any) => b.id === c.branchId);
-                const machine = machines.find((m: any) => m.id === c.machineId);
-                return (
-                    <TableRow key={c.id} onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} isAdmin={isAdmin}>
-                        <td className="px-6 py-4 text-slate-400 font-medium text-xs">{c.date}</td>
-                        <td className="px-6 py-4">
-                            <div className="flex flex-col">
-                                <span className="font-bold text-white text-sm">{branch?.name}</span>
-                                <span className="text-[10px] text-slate-500 font-mono">{branch?.phone}</span>
-                            </div>
-                        </td>
-                        <td className="px-6 py-4">
-                            <div className="flex flex-col">
-                                <span className="font-bold text-brand text-xs">{machine?.name}</span>
-                                <span className="text-[10px] text-slate-500 font-mono">{machine.sn}</span>
-                            </div>
-                        </td>
-                        <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{c.symptom}</td>
-                        <td className="px-6 py-4 text-slate-400 text-xs max-w-[200px] truncate">{c.solution}</td>
-                        <td className="px-6 py-4 text-slate-400 text-xs">{c.technicians}</td>
+function MachineListView({ machines, branches, onEdit, onDelete, t, isAdmin }: any) {
+    return (
+        <TableBase>
+            <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                    <th className="px-6 py-4">Branch</th>
+                    <th className="px-6 py-4">Asset</th>
+                    <th className="px-6 py-4">S/N</th>
+                    <th className="px-6 py-4 text-center">Install</th>
+                    <th className="px-6 py-4 text-center">Age</th>
+                    <th className="px-6 py-4 text-center">POS</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4">Remark</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+                {machines.map((m: any) => (
+                    <TableRow key={m.id} onEdit={() => onEdit(m)} onDelete={() => onDelete(m.id)} isAdmin={isAdmin}>
+                        <td className="px-6 py-4 text-slate-400 font-bold">{branches.find((b: any) => b.id === m.branchId)?.name}</td>
+                        <td className="px-6 py-4 font-bold text-white">{m.name}</td>
+                        <td className="px-6 py-4 font-mono text-slate-500 text-xs">{m.sn}</td>
+                        <td className="px-6 py-4 text-center text-xs text-slate-500">{m.installDate}</td>
+                        <td className="px-6 py-4 text-center text-xs font-mono text-brand">{calculateAge(m.installDate)}</td>
+                        <td className="px-6 py-4 text-center text-xs text-slate-400">{m.pos}</td>
+                        <td className="px-6 py-4 text-center"><Badge variant={m.status === 'พร้อมใช้งาน' ? 'success' : m.status === 'รอซ่อม' ? 'error' : 'default'} className="font-bold tracking-tighter uppercase whitespace-nowrap text-[10px]">{m.status}</Badge></td>
+                        <td className="px-6 py-4 text-xs text-slate-500 italic max-w-[150px] truncate">{m.remark}</td>
                     </TableRow>
-                );
-            })}
-        </tbody>
-    </TableBase>
-);
+                ))}
+            </tbody>
+        </TableBase>
+    );
+}
 
-const LoginModal = ({ onClose, onLogin, t }: any) => {
+function ExpenseListView({ expenses, branches, onEdit, onDelete, t, isAdmin }: any) {
+    return (
+        <TableBase>
+            <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                    <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                    <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
+                    <th className="px-6 py-4">{t('Type', 'ประเภทค่าใช้จ่าย')}</th>
+                    <th className="px-6 py-4">{t('Detail', 'รายละเอียด')}</th>
+                    <th className="px-6 py-4">{t('Technician', 'ช่างที่เข้าหน้างาน')}</th>
+                    <th className="px-6 py-4 text-right">{t('Amount', 'จำนวนเงิน(บาท)')}</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+                {expenses.map((e: any) => (
+                    <TableRow key={e.id} onEdit={() => onEdit(e)} onDelete={() => onDelete(e.id)} isAdmin={isAdmin}>
+                        <td className="px-6 py-4 font-bold text-white">{branches.find((b: any) => b.id === e.branchId)?.name}</td>
+                        <td className="px-6 py-4 text-slate-400 font-medium text-xs">{e.date}</td>
+                        <td className="px-6 py-4"><Badge className="bg-slate-800 text-brand border-brand/20 font-bold">{e.type}</Badge></td>
+                        <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{e.detail}</td>
+                        <td className="px-6 py-4 text-slate-400 text-xs">{e.technician}</td>
+                        <td className="px-6 py-4 text-right font-black text-brand tabular-nums">฿{e.amount.toLocaleString()}</td>
+                    </TableRow>
+                ))}
+            </tbody>
+        </TableBase>
+    );
+}
+
+function SparePartsView({ parts, branches, onEdit, onDelete, t, isAdmin }: any) {
+    return (
+        <TableBase>
+            <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                    <th className="px-6 py-4">{t('Date', 'วันที่ซ่อม')}</th>
+                    <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                    <th className="px-6 py-4">{t('Device', 'อุปกรณ์ที่ซ่อม')}</th>
+                    <th className="px-6 py-4">{t('Part', 'ชื่ออะไหล่')}</th>
+                    <th className="px-6 py-4 text-center">{t('Qty', 'จำนวน')}</th>
+                    <th className="px-6 py-4 text-right">{t('Price/Unit', 'ราคา/หน่วย')}</th>
+                    <th className="px-6 py-4 text-right">{t('Total', 'ราคารวม')}</th>
+                    <th className="px-6 py-4">{t('Technician', 'ช่างที่ดำเนินการ')}</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+                {parts.map((p: any) => (
+                    <TableRow key={p.id} onEdit={() => onEdit(p)} onDelete={() => onDelete(p.id)} isAdmin={isAdmin}>
+                        <td className="px-6 py-4 text-slate-400 font-medium text-xs">{p.date}</td>
+                        <td className="px-6 py-4 text-white font-bold text-sm">{branches.find((b: any) => b.id === p.branchId)?.name}</td>
+                        <td className="px-6 py-4 text-brand font-bold text-xs">{p.device}</td>
+                        <td className="px-6 py-4 text-slate-300 font-semibold">{p.partName}</td>
+                        <td className="px-6 py-4 text-center text-slate-400">{p.qty}</td>
+                        <td className="px-6 py-4 text-right text-slate-400 tabular-nums">฿{p.unitPrice.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-right font-black text-emerald-500 tabular-nums">฿{p.totalPrice.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-slate-400 text-xs">{p.technician}</td>
+                    </TableRow>
+                ))}
+            </tbody>
+        </TableBase>
+    );
+}
+
+function CMListView({ cms, branches, machines, onEdit, onDelete, t, isAdmin }: any) {
+    return (
+        <TableBase>
+            <thead className="bg-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <tr>
+                    <th className="px-6 py-4">{t('Date', 'วันที่')}</th>
+                    <th className="px-6 py-4">{t('Branch', 'สาขา')}</th>
+                    <th className="px-6 py-4">{t('Machine', 'เครื่อง/S/N')}</th>
+                    <th className="px-6 py-4">{t('Symptom', 'อาการเสีย')}</th>
+                    <th className="px-6 py-4">{t('Solution', 'การแก้ไข')}</th>
+                    <th className="px-6 py-4">{t('Technician', 'ช่าง')}</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+                {cms.map((c: any) => {
+                    const branch = branches.find((b: any) => b.id === c.branchId);
+                    const machine = machines.find((m: any) => m.id === c.machineId);
+                    return (
+                        <TableRow key={c.id} onEdit={() => onEdit(c)} onDelete={() => onDelete(c.id)} isAdmin={isAdmin}>
+                            <td className="px-6 py-4 text-slate-400 font-medium text-xs">{c.date}</td>
+                            <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-white text-sm">{branch?.name}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">{branch?.phone}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-brand text-xs">{machine?.name}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">{machine?.sn}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 text-slate-300 text-sm max-w-[200px] truncate">{c.symptom}</td>
+                            <td className="px-6 py-4 text-slate-400 text-xs max-w-[200px] truncate">{c.solution}</td>
+                            <td className="px-6 py-4 text-slate-400 text-xs">{c.technicians}</td>
+                        </TableRow>
+                    );
+                })}
+            </tbody>
+        </TableBase>
+    );
+}
+
+function LoginModal({ onClose, onLogin, t }: any) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -1391,14 +1466,14 @@ const LoginModal = ({ onClose, onLogin, t }: any) => {
                             autoFocus
                             placeholder="Username"
                             value={username}
-                            onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                            onChange={(e: any) => { setUsername(e.target.value); setError(''); }}
                             className="bg-slate-950 border-slate-800 focus:border-brand"
                         />
                         <Input
                             type="password"
                             placeholder="Password"
                             value={password}
-                            onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                            onChange={(e: any) => { setPassword(e.target.value); setError(''); }}
                             className="bg-slate-950 border-slate-800 focus:border-brand"
                         />
                         {error && <p className="text-red-500 text-xs text-center mt-2">{error}</p>}
@@ -1411,5 +1486,5 @@ const LoginModal = ({ onClose, onLogin, t }: any) => {
             </Card>
         </div>
     );
-};
+}
 
