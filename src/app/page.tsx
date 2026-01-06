@@ -748,20 +748,21 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
 
             {/* --- Summary Sections --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {/* Top 5 Total Expenses (Combined) */}
+                {/* Top 5 General Expenses */}
                 <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
                     <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-brand" />
-                        {t('Top 5 Total Expenses', '5 อันดับสาขาค่าใช้จ่ายรวม')}
+                        <DollarSign className="w-5 h-5 text-emerald-500" />
+                        {t('Top 5 General Expenses', '5 อันดับสาขาค่าใช้จ่ายทั่วไป')}
                     </h3>
                     <div className="space-y-3">
-                        {Object.values([...expenses, ...parts].reduce((acc: any, curr: any) => {
-                            const bId = curr.branchId;
-                            const amount = curr.amount !== undefined ? curr.amount : curr.totalPrice;
-                            if (!acc[bId]) acc[bId] = { branchId: bId, total: 0 };
-                            acc[bId].total += amount;
-                            return acc;
-                        }, {}))
+                        {Object.values(expenses
+                            .filter((e: any) => !repairTypes.includes(e.type))
+                            .reduce((acc: any, curr: any) => {
+                                const bId = curr.branchId;
+                                if (!acc[bId]) acc[bId] = { branchId: bId, total: 0 };
+                                acc[bId].total += curr.amount;
+                                return acc;
+                            }, {}))
                             .sort((a: any, b: any) => b.total - a.total)
                             .slice(0, 5)
                             .map((item: any, i: number) => {
@@ -771,11 +772,11 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                         <div className="flex flex-col">
                                             <span className="text-sm font-semibold text-slate-200">{branch?.code || 'N/A'} {branch?.name}</span>
                                         </div>
-                                        <span className="text-brand font-bold">฿{item.total.toLocaleString()}</span>
+                                        <span className="text-emerald-500 font-bold">฿{item.total.toLocaleString()}</span>
                                     </div>
                                 );
                             })}
-                        {expenses.length === 0 && parts.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
+                        {expenses.filter(e => !repairTypes.includes(e.type)).length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
                     </div>
                 </Card>
 
