@@ -776,7 +776,7 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                     </div>
                                 );
                             })}
-                        {expenses.filter(e => !repairTypes.includes(e.type)).length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
+                        {expenses.filter((e: any) => !repairTypes.includes(e.type)).length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
                     </div>
                 </Card>
 
