@@ -620,30 +620,26 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
     // Calculate totals from Spare Parts table
     const partsTotal = parts.reduce((sum: number, p: any) => sum + p.totalPrice, 0);
 
-    // Total Expenses = Expenses Only + All Parts
-    const totalExpenses = expenseTotal + partsTotal;
-
-    // Repair Costs = (Repair/Maintenance in Expenses) + All Parts
-    const repairExpenses = expenses.filter((e: any) =>
-        e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าบำรุงรักษา' || e.type === 'Maintenance'
+    // 1. Repair Costs = (Repair/Maintenance types in Expenses) + All Spare Parts
+    const repairTypes = ['ค่าซ่อมแซม', 'Repair', 'ค่าบำรุงรักษา', 'Maintenance', 'ค่าอะไหล่', 'Spare Parts'];
+    const repairExpensesFromTable = expenses.filter((e: any) =>
+        repairTypes.includes(e.type)
     ).reduce((sum: number, e: any) => sum + e.amount, 0);
 
-    const repairCosts = repairExpenses + partsTotal;
+    const repairCosts = repairExpensesFromTable + partsTotal;
+
+    // 2. General Expenses = Everything else in Expenses table
+    const generalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0) - repairExpensesFromTable;
+
+    // 3. Grand Total (For reference if needed)
+    const grandTotal = generalExpenses + repairCosts;
 
     const chartData = useMemo(() => {
         const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
         return months.map(m => {
-            // Sum from Expenses
-            const expSum = expenses.filter((e: any) => {
+            const repairSum = expenses.filter((e: any) => {
                 const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
-                return format(d, 'MM') === m;
-            }).reduce((s: number, e: any) => s + e.amount, 0);
-
-            // Sum Repair Costs for chart (Maintenance/Repair expenses + Spare Parts)
-            const repairExpSum = expenses.filter((e: any) => {
-                const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
-                const isRepairType = e.type === 'ค่าซ่อมแซม' || e.type === 'Repair' || e.type === 'ค่าบำรุงรักษา' || e.type === 'Maintenance';
-                return format(d, 'MM') === m && isRepairType;
+                return format(d, 'MM') === m && repairTypes.includes(e.type);
             }).reduce((s: number, e: any) => s + e.amount, 0);
 
             const partsSum = parts.filter((p: any) => {
@@ -651,10 +647,15 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                 return format(d, 'MM') === m;
             }).reduce((s: number, p: any) => s + p.totalPrice, 0);
 
+            const generalSum = expenses.filter((e: any) => {
+                const d = typeof e.date === 'string' ? parseISO(e.date) : new Date(e.date);
+                return format(d, 'MM') === m && !repairTypes.includes(e.type);
+            }).reduce((s: number, e: any) => s + e.amount, 0);
+
             return {
                 name: m,
-                amount: expSum + partsSum,
-                repairAmount: repairExpSum + partsSum
+                generalAmount: generalSum,
+                repairAmount: repairSum + partsSum
             };
         });
     }, [expenses, parts]);
@@ -662,10 +663,10 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
     return (
         <div className="space-y-8 animate-in">
             <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                <StatsCard title={t('Total Expenses', 'ค่าใช้จ่ายรวม')} value={`฿${totalExpenses.toLocaleString()}`} icon={<DollarSign className="text-brand" />} accent="brand" />
+                <StatsCard title={t('Grand Total', 'ค่าใช้จ่ายรวมทั้งหมด')} value={`฿${grandTotal.toLocaleString()}`} icon={<TrendingUp className="text-brand" />} accent="brand" />
+                <StatsCard title={t('General Expenses', 'ค่าใช้จ่ายทั่วไป')} value={`฿${generalExpenses.toLocaleString()}`} icon={<DollarSign className="text-emerald-500" />} accent="emerald" />
                 <StatsCard title={t('Repair Costs', 'ค่าซ่อมบำรุง')} value={`฿${repairCosts.toLocaleString()}`} icon={<Wrench className="text-blue-500" />} accent="blue" />
-                <StatsCard title={t('Active Branches', 'สาขาทั้งหมด')} value={branches.length.toString()} icon={<Store className="text-emerald-500" />} accent="emerald" />
-                <StatsCard title={t('Total Assets', 'รายการอุปกรณ์')} value={machines.length.toString()} icon={<Cpu className="text-purple-500" />} accent="purple" />
+                <StatsCard title={t('Active Branches', 'สาขาทั้งหมด')} value={branches.length.toString()} icon={<Store className="text-purple-500" />} accent="purple" />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -699,7 +700,7 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                     formatter={(v: any) => `฿${v.toLocaleString()}`}
                                 />
                                 <Legend verticalAlign="top" height={36} iconType="circle" />
-                                <Area name={t('Total Expenses', 'ค่าใช้จ่ายรวม')} type="monotone" dataKey="amount" stroke="#F97316" fill="url(#colorExp)" strokeWidth={3} animationDuration={1000} />
+                                <Area name={t('General Expenses', 'ค่าใช้จ่ายทั่วไป')} type="monotone" dataKey="generalAmount" stroke="#10B981" fill="url(#colorExp)" strokeWidth={3} animationDuration={1000} />
                                 <Area name={t('Repair Costs', 'ค่าซ่อมบำรุง')} type="monotone" dataKey="repairAmount" stroke="#3B82F6" fill="url(#colorRepair)" strokeWidth={3} animationDuration={1000} />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -747,14 +748,13 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
 
             {/* --- Summary Sections --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {/* Top 5 Total Expenses */}
+                {/* Top 5 Total Expenses (Combined) */}
                 <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
                     <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
                         <DollarSign className="w-5 h-5 text-brand" />
-                        Top 5 Total Expenses
+                        {t('Top 5 Total Expenses', '5 อันดับสาขาค่าใช้จ่ายรวม')}
                     </h3>
                     <div className="space-y-3">
-                        {/* Calculate Total Expenses per Branch (Expenses + Parts) */}
                         {Object.values([...expenses, ...parts].reduce((acc: any, curr: any) => {
                             const bId = curr.branchId;
                             const amount = curr.amount !== undefined ? curr.amount : curr.totalPrice;
@@ -775,7 +775,7 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                     </div>
                                 );
                             })}
-                        {expenses.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
+                        {expenses.length === 0 && parts.length === 0 && <div className="text-center text-slate-500 py-4">No data available</div>}
                     </div>
                 </Card>
 
@@ -783,14 +783,12 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                 <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
                     <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
                         <Wrench className="w-5 h-5 text-blue-500" />
-                        Top 5 Repair Costs
+                        {t('Top 5 Repair Costs', '5 อันดับสาขาค่าซ่อมบำรุง')}
                     </h3>
                     <div className="space-y-3">
-
-                        {/* Calculate Total Repair Costs per Branch */}
                         {Object.values([...expenses, ...parts]
                             .filter((item: any) => {
-                                const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
+                                const isRepairExp = item.amount !== undefined && repairTypes.includes(item.type);
                                 const isPart = item.totalPrice !== undefined;
                                 return isRepairExp || isPart;
                             })
@@ -814,21 +812,19 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                     </div>
                                 );
                             })}
-                        {([...expenses, ...parts].filter((item: any) => {
-                            const isRepairExp = item.amount !== undefined && (item.type === 'ค่าซ่อมแซม' || item.type === 'Repair' || item.type === 'ค่าบำรุงรักษา' || item.type === 'Maintenance');
-                            const isPart = item.totalPrice !== undefined;
-                            return isRepairExp || isPart;
-                        }).length === 0) && <div className="text-center text-slate-500 py-4">No data available</div>}
+                        {([...expenses, ...parts].filter((item: any) =>
+                            (item.amount !== undefined && repairTypes.includes(item.type)) || item.totalPrice !== undefined
+                        ).length === 0) && <div className="text-center text-slate-500 py-4">No repair data available</div>}
                     </div>
                 </Card>
-                {/* Corrective Maintenance (CM) Records Summary */}
+
+                {/* CM Records Summary */}
                 <Card className="bg-slate-900/40 border-slate-800 shadow-premium p-6">
                     <h3 className="text-md font-bold text-white mb-4 uppercase tracking-wider flex items-center gap-2">
                         <ClipboardList className="w-5 h-5 text-purple-500" />
                         {t('CM Records Summary', 'สรุปการเข้า CM')}
                     </h3>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                        {/* Calculate CM counts per branch */}
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                         {Object.values(cms.reduce((acc: any, curr: any) => {
                             const bId = curr.branchId;
                             if (!acc[bId]) acc[bId] = { branchId: bId, count: 0 };
@@ -850,10 +846,9 @@ function DashboardView({ branches, machines, expenses, parts, cms, t, isAdmin }:
                                     </div>
                                 );
                             })}
-                        {cms.length === 0 && <div className="text-center text-slate-500 py-4">No CM records available</div>}
+                        {cms.length === 0 && <div className="text-center text-slate-500 py-4">{t('No CM records available', 'ไม่มีข้อมูลการเข้า CM')}</div>}
                     </div>
                 </Card>
-                {/* Removed the extra empty grid row */}
             </div>
         </div>
     );
