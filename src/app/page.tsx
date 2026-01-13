@@ -108,6 +108,7 @@ export default function Page() {
     const [filterPhase, setFilterPhase] = useState<string>('All');
     const [filterBranchId, setFilterBranchId] = useState<string>('All');
     const [filterCategory, setFilterCategory] = useState<string>('All');
+    const [filterStatus, setFilterStatus] = useState<string>('All');
 
     // --- CRUD State ---
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -172,7 +173,7 @@ export default function Page() {
     };
 
     const filteredMachines = useMemo(() => machines
-        .filter(m => filterByCommon(m, 'installDate'))
+        .filter(m => filterByCommon(m, 'installDate') && (filterStatus === 'All' || m.status === filterStatus))
         .sort((a, b) => {
             const branchA = branches.find(br => br.id === a.branchId);
             const branchB = branches.find(br => br.id === b.branchId);
@@ -180,7 +181,7 @@ export default function Page() {
             const codeB = branchB?.code || '';
             return codeA.localeCompare(codeB, undefined, { numeric: true });
         })
-        , [machines, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
+        , [machines, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterStatus]);
     const filteredExpenses = useMemo(() => expenses.filter(e => filterByCommon(e) && (filterCategory === 'All' || e.type === filterCategory)), [expenses, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
     const filteredParts = useMemo(() => parts.filter(p => filterByCommon(p) && (filterCategory === 'All' || p.device === filterCategory)), [parts, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId, filterCategory]);
     const filteredCms = useMemo(() => cms.filter(c => filterByCommon(c)), [cms, branches, globalSearch, filterMonth, filterYear, filterPhase, filterBranchId]);
@@ -465,6 +466,14 @@ export default function Page() {
                             options={[{ v: 'All', l: t('All', 'ทุกสาขา') }, ...branches.map(b => ({ v: b.id, l: b.name }))]}
                             label={t('Branch', 'สาขา')}
                         />
+                        {activeTab === 'machines' && (
+                            <FilterSelect
+                                value={filterStatus}
+                                onChange={setFilterStatus}
+                                options={['All', 'พร้อมใช้งาน', 'รอซ่อม', 'Renovate', 'ยกเลิกการใช้งาน', 'Other']}
+                                label={t('Status', 'สถานะ')}
+                            />
+                        )}
                         {['expenses', 'parts'].includes(activeTab) && (
                             <FilterSelect
                                 value={filterCategory}
@@ -474,7 +483,7 @@ export default function Page() {
                             />
                         )}
                         <button onClick={() => {
-                            setFilterMonth('All'); setFilterYear('2023'); setFilterPhase('All'); setFilterBranchId('All'); setFilterCategory('All'); setGlobalSearch('');
+                            setFilterMonth('All'); setFilterYear('All'); setFilterPhase('All'); setFilterBranchId('All'); setFilterCategory('All'); setFilterStatus('All'); setGlobalSearch('');
                         }} className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all active:scale-95">
                             <RefreshCw size={12} /> {t('Reset', 'ล้าง')}
                         </button>
