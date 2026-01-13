@@ -976,8 +976,9 @@ function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any
                                     <Input autoFocus placeholder="Enter Asset Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 ) : (
                                     <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.name} onChange={e => handleSelectChange('name', e.target.value)}>
-                                        <option value="CI-10">CI-10</option>
-                                        <option value="CI-5">CI-5</option>
+                                        <option value="CI-10B">CI-10B</option>
+                                        <option value="CI-10C">CI-10C</option>
+                                        <option value="CI-5B">CI-5B</option>
                                         <option value="RK-10">RK-10</option>
                                         <option value="Other">Other</option>
                                     </select>

@@ -9,8 +9,8 @@ export const mockBranches: Branch[] = [
 ];
 
 export const mockMachines: Machine[] = [
-    { id: 'M1', branchId: '1', name: 'CI-10', sn: 'SN001', installDate: '2023-01-15', pos: 'CE', status: 'พร้อมใช้งาน', remark: 'Main POS' },
-    { id: 'M2', branchId: '1', name: 'CI-5', sn: 'SN002', installDate: '2023-06-20', pos: 'CE', status: 'พร้อมใช้งาน', remark: 'Kitchen Display' },
+    { id: 'M1', branchId: '1', name: 'CI-10B', sn: 'SN001', installDate: '2023-01-15', pos: 'CE', status: 'พร้อมใช้งาน', remark: 'Main POS' },
+    { id: 'M2', branchId: '1', name: 'CI-5B', sn: 'SN002', installDate: '2023-06-20', pos: 'CE', status: 'พร้อมใช้งาน', remark: 'Kitchen Display' },
     { id: 'M3', branchId: '2', name: 'RK-10', sn: 'SN003', installDate: '2022-11-05', pos: '12DATA', status: 'รอซ่อม', remark: 'Scanner issues' },
 ];
 
