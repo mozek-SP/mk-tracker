@@ -469,7 +469,7 @@ export default function Page() {
                             <FilterSelect
                                 value={filterCategory}
                                 onChange={setFilterCategory}
-                                options={activeTab === 'expenses' ? ['All', 'Maintenance', 'Repair', 'Spare Parts', 'Service'] : ['All', 'CI-10B', 'CI-10C', 'CI-5B', 'UPS']}
+                                options={activeTab === 'expenses' ? ['All', 'Maintenance', 'Repair', 'Spare Parts', 'Service'] : ['All', 'CI-10', 'CI-10B', 'CI-10C', 'CI-5', 'CI-5B', 'UPS']}
                                 label={t('Category', 'หมวดหมู่')}
                             />
                         )}
@@ -889,12 +889,12 @@ function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any
         if (item) {
             // Check Part Device
             if (type === 'part') {
-                const valid = ['CI-10B', 'CI-10C', 'CI-5B', 'UPS'];
+                const valid = ['CI-10', 'CI-10B', 'CI-10C', 'CI-5', 'CI-5B', 'UPS'];
                 if (item.device && !valid.includes(item.device)) others.device = true;
             }
             // Check Machine Name
             if (type === 'machine') {
-                const valid = ['CI-10B', 'CI-10C', 'CI-5B', 'RK-10'];
+                const valid = ['CI-10', 'CI-10B', 'CI-10C', 'CI-5', 'CI-5B', 'RK-10'];
                 if (item.name && !valid.includes(item.name)) others.name = true;
             }
             // Check Branch Type
@@ -1001,8 +1001,10 @@ function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any
                                     <Input autoFocus placeholder="Enter Asset Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 ) : (
                                     <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.name} onChange={e => handleSelectChange('name', e.target.value)}>
+                                        <option value="CI-10">CI-10</option>
                                         <option value="CI-10B">CI-10B</option>
                                         <option value="CI-10C">CI-10C</option>
+                                        <option value="CI-5">CI-5</option>
                                         <option value="CI-5B">CI-5B</option>
                                         <option value="RK-10">RK-10</option>
                                         <option value="Other">Other</option>
@@ -1078,8 +1080,10 @@ function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any
                                         <Input autoFocus placeholder="Enter Device Name" className="bg-slate-800/80 border-brand/50 h-11" value={formData.device} onChange={e => setFormData({ ...formData, device: e.target.value })} />
                                     ) : (
                                         <select className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-sm focus:border-brand focus:ring-brand/20 outline-none" value={formData.device} onChange={e => handleSelectChange('device', e.target.value)}>
+                                            <option value="CI-10">CI-10</option>
                                             <option value="CI-10B">CI-10B</option>
                                             <option value="CI-10C">CI-10C</option>
+                                            <option value="CI-5">CI-5</option>
                                             <option value="CI-5B">CI-5B</option>
                                             <option value="UPS">UPS</option>
                                             <option value="Other">อื่น ๆ</option>
