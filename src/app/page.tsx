@@ -884,7 +884,32 @@ function EntityModal({ type, item, branches, machines, onClose, onSave, t }: any
         machineId: '', symptom: '', solution: '', technicians: ''
     });
 
-    const [otherFields, setOtherFields] = useState<Record<string, boolean>>({});
+    const [otherFields, setOtherFields] = useState<Record<string, boolean>>(() => {
+        const others: any = {};
+        if (item) {
+            // Check Part Device
+            if (type === 'part') {
+                const valid = ['CI-10B', 'CI-10C', 'CI-5B', 'UPS'];
+                if (item.device && !valid.includes(item.device)) others.device = true;
+            }
+            // Check Machine Name
+            if (type === 'machine') {
+                const valid = ['CI-10B', 'CI-10C', 'CI-5B', 'RK-10'];
+                if (item.name && !valid.includes(item.name)) others.name = true;
+            }
+            // Check Branch Type
+            if (type === 'branch') {
+                const valid = ['MK Restaurant', 'MK Gold', 'MK Live', 'Bonus Suki'];
+                if (item.type && !valid.includes(item.type)) others.type = true;
+            }
+            // Check Expense Type
+            if (type === 'expense') {
+                const valid = ['ค่าบำรุงรักษา', 'ค่าซ่อมแซม', 'ค่าอะไหล่', 'ค่าบริการ'];
+                if (item.type && !valid.includes(item.type)) others.type = true;
+            }
+        }
+        return others;
+    });
 
     const handleSelectChange = (field: string, value: string) => {
         if (value === 'Other') {
